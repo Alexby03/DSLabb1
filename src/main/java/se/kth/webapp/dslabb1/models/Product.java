@@ -19,15 +19,15 @@ public class Product implements Serializable {
     private double price;
     private boolean retired;
 
-    public Product(String sku, String name, String description, Category category, double price, int quantity) {
+    public Product(String sku, String name, String description, Category category, double price, int quantity, boolean retired) {
         if (sku == null || sku.isBlank()) throw new IllegalArgumentException("sku required");
         this.sku = sku;
         this.name = name;
         this.description = description;
         this.category = category;
-        this.price = Math.max(price, 0.0);
-        this.quantity = Math.max(0, quantity);
-        this.retired = false;
+        this.price = price;
+        this.quantity = quantity;
+        this.retired = retired;
     }
 
 
@@ -46,13 +46,13 @@ public class Product implements Serializable {
 
 
     public void increaseQuantity(int amount) {
-        if (amount <= 0) throw new IllegalArgumentException("amount > 0");
+        if (amount <= 0) throw new IllegalArgumentException("amount must be > 0");
         this.quantity += amount;
     }
 
 
     public boolean decreaseQuantity(int amount) {
-        if (amount <= 0) throw new IllegalArgumentException("amount > 0");
+        if (amount <= 0) throw new IllegalArgumentException("amount must be > 0");
         if (this.quantity < amount) return false;
         this.quantity -= amount;
         return true;

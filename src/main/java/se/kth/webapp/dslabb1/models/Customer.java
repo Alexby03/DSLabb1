@@ -12,8 +12,8 @@ public class Customer implements User {
     private final String fullName;
     private String address;
 
-    public Customer(String email, String passwordHash, String fullName) {
-        this.customerId = UUID.randomUUID();
+    public Customer(UUID customerId ,String email, String passwordHash, String fullName) {
+        this.customerId = customerId;
         this.email = email;
         this.passwordHash = passwordHash;
         this.fullName = fullName;

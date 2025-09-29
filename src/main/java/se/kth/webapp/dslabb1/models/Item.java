@@ -9,7 +9,6 @@ import java.util.UUID;
  * It contains a snapshot of product data (sku, name, unitPrice, quantity).
  */
 public class Item implements Serializable {
-    private final UUID itemId;
     private final UUID orderId;
     private final String sku;
     private final String productName;
@@ -20,15 +19,13 @@ public class Item implements Serializable {
         if (orderId == null) throw new IllegalArgumentException("orderId required");
         if (sku == null || sku.isBlank()) throw new IllegalArgumentException("sku required");
         if (productName == null || productName.isBlank()) throw new IllegalArgumentException("productName required");
-        this.itemId = UUID.randomUUID();
         this.orderId = orderId;
         this.sku = sku;
         this.productName = productName;
-        this.unitPrice = Math.max(unitPrice, 0.0);
-        this.quantity = Math.max(1, quantity);
+        this.unitPrice = unitPrice;
+        this.quantity = quantity;
     }
 
-    public UUID getItemId() { return itemId; }
     public UUID getOrderId() { return orderId; }
     public String getSku() { return sku; }
     public String getProductName() { return productName; }
@@ -37,20 +34,10 @@ public class Item implements Serializable {
 
     public double subtotal() { return unitPrice * quantity; }
 
-    @Override
-    public boolean equals(Object o) {
-        if (this == o) return true;
-        if (!(o instanceof Item item)) return false;
-        return Objects.equals(itemId, item.itemId);
-    }
 
-    @Override
-    public int hashCode() {
-        return Objects.hash(itemId);
-    }
 
     @Override
     public String toString() {
-        return "Item{" + "itemId=" + itemId + ", sku='" + sku + '\'' + ", name='" + productName + '\'' + ", qty=" + quantity + '}';
+        return "Item{" + ", sku='" + sku + '\'' + ", name='" + productName + '\'' + ", qty=" + quantity + '}';
     }
 }
