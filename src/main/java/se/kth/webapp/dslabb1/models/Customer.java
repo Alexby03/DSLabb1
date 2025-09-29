@@ -8,18 +8,19 @@ import java.util.UUID;
 public class Customer implements User {
     private final UUID customerId;
     private final String email;
-    private final String password;
+    private final String passwordHash;
     private final String fullName;
     private String address;
 
     public Customer(String email, String passwordHash, String fullName) {
         this.customerId = UUID.randomUUID();
         this.email = email;
-        this.password = passwordHash;
+        this.passwordHash = passwordHash;
         this.fullName = fullName;
     }
 
     // NOTE: do NOT store List<Order> here by default, use DAO to fetch orders
+
 
     @Override
     public UUID getId() {
@@ -32,8 +33,8 @@ public class Customer implements User {
     }
 
     @Override
-    public String getPassword() {
-        return password;
+    public String getPasswordHash() {
+        return passwordHash;
     }
 
     @Override

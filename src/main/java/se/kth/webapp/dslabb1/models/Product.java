@@ -3,7 +3,7 @@ package se.kth.webapp.dslabb1.models;
 import se.kth.webapp.dslabb1.models.enums.Category;
 
 import java.io.Serializable;
-import java.math.BigDecimal;
+import java.util.Locale;
 import java.util.Objects;
 
 /**
@@ -11,28 +11,27 @@ import java.util.Objects;
  *
  */
 public class Product implements Serializable {
-    private String sku;           // primary key, custom and unique for entire product
+    private final String sku;           // primary key, custom and unique for entire product
     private String name;
     private String description;
     private Category category;
     private int quantity;
-    private BigDecimal price;
+    private double price;
     private boolean retired;
 
-    public Product(String sku, String name, String description, Category category, BigDecimal price, int quantity) {
+    public Product(String sku, String name, String description, Category category, double price, int quantity) {
         if (sku == null || sku.isBlank()) throw new IllegalArgumentException("sku required");
         this.sku = sku;
         this.name = name;
         this.description = description;
         this.category = category;
-        this.price = price != null ? price : BigDecimal.ZERO;
+        this.price = Math.max(price, 0.0);
         this.quantity = Math.max(0, quantity);
         this.retired = false;
     }
 
 
     public String getSku() { return sku; }
-    public void setSku(String sku) { if (sku == null) throw new IllegalArgumentException("sku"); this.sku = sku; }
 
     public String getName() { return name; }
     public void setName(String name) { this.name = name; }
@@ -63,11 +62,19 @@ public class Product implements Serializable {
         return required > 0 && this.quantity >= required;
     }
 
-    public BigDecimal getPrice() { return price; }
-    public void setPrice(BigDecimal price) { this.price = price; }
+    public double getPrice() { return price; }
+    public void setPrice(double price) { this.price = price >= 0.0 ? price : this.price; }
 
     public boolean isRetired() { return retired; }
     public void setRetired(boolean retired) { this.retired = retired; }
+
+
+    public void retire() {
+        this.retired = true;
+    }
+    public static String formatPrice(double value) {
+        return String.format(Locale.US, "%.2f", value);
+    }
 
     @Override
     public boolean equals(Object o) {

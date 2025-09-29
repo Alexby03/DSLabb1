@@ -3,7 +3,6 @@ package se.kth.webapp.dslabb1.models;
 import se.kth.webapp.dslabb1.models.enums.OrderStatus;
 
 import java.io.Serializable;
-import java.math.BigDecimal;
 import java.time.LocalDateTime;
 import java.util.*;
 
@@ -18,9 +17,12 @@ public class Order implements Serializable {
     private final List<Item> items;
 
     public Order(UUID customerId, List<Item> items) {
+        if (customerId == null) throw new IllegalArgumentException("customerId required");
+        if (items == null || items.isEmpty()) throw new IllegalArgumentException("items required");
+        if (items.stream().anyMatch(Objects::isNull)) throw new IllegalArgumentException("null item");
         this.orderId = UUID.randomUUID();
         this.customerId = customerId;
-        this.items = new ArrayList<>(items != null ? items : Collections.emptyList());
+        this.items = List.copyOf(items);
         this.createdAt = LocalDateTime.now();
         this.orderStatus = OrderStatus.PAID;
     }
@@ -32,22 +34,25 @@ public class Order implements Serializable {
     public void setOrderStatus(OrderStatus orderStatus) { this.orderStatus = orderStatus; }
     public List<Item> getItems() { return Collections.unmodifiableList(items); }
 
-    public BigDecimal getTotalAmount() {
+    public double getTotalAmount() {
         return items.stream()
-                .map(Item::subtotal)
-                .reduce(BigDecimal.ZERO, BigDecimal::add);
+                .mapToDouble(Item::subtotal)
+                .sum();
     }
 
-    public void cancelOrder() {
-        this.orderStatus = OrderStatus.CANCELED;
-    }
-
-    public void updateOrderStatus() {
-        OrderStatus[] statuses = OrderStatus.values();
-        int currentIndex = orderStatus.ordinal();
-        if (currentIndex < statuses.length - 1) {
-            this.orderStatus = statuses[currentIndex + 1];
+    public void advanceStatus() {
+        if (orderStatus == OrderStatus.CANCELED || orderStatus == OrderStatus.DELIVERED) return;
+        switch (orderStatus) {
+            case PAID -> orderStatus = OrderStatus.SHIPPED;
+            case SHIPPED -> orderStatus = OrderStatus.DELIVERED;
+            default -> {}
         }
+    }
+
+    public boolean cancelOrder() {
+        if (orderStatus == OrderStatus.SHIPPED || orderStatus == OrderStatus.DELIVERED) return false;
+        orderStatus = OrderStatus.CANCELED;
+        return true;
     }
 
     @Override

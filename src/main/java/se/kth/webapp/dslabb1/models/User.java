@@ -5,7 +5,7 @@ import java.util.UUID;
 public interface User {
     UUID getId();
     String getEmail();
-    String getPassword();
+    String getPasswordHash();
     String getFullName();
 
     enum UserType {
