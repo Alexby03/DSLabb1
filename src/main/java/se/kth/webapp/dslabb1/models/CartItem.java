@@ -35,9 +35,11 @@ public class CartItem {
 
 @Override
     public String toString() {
-    return "Cart{" +
+    return "CartItem{" +
             "SKU=" + sku +
-            ", products=" + productName + ", price=" + price +
+            ", products=" + productName +
+            ", price=" + price +
+            ", quantity=" + quantity +
             '}';
 }
 

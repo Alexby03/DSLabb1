@@ -22,7 +22,7 @@ public class Cart implements Serializable {
         this.items = new ArrayList<>(items);
     }
 
-    public UUID getOrderId() { return customerId; }
+    public UUID getCustomerId() { return customerId; }
 
     public List<CartItem> getItems(){ return List.copyOf(items); }
 
@@ -43,8 +43,25 @@ public class Cart implements Serializable {
         return Result.SUCCESS;
     }
 
-    public Result addItem(CartItem item){
-        items.add(item);
+//    public Result addItem(CartItem item){
+//        items.add(item);
+//        return Result.SUCCESS;
+//    }
+
+    // Check if item with same SKU exists in Cart, if so, increase quantity, if not add as new item
+    public Result addItem(CartItem newItem) {
+        if (newItem == null) {
+            return Result.FAILED;
+        }
+
+        for (CartItem existingItem : items) {
+            if (existingItem.getSku().equals(newItem.getSku())) {
+                existingItem.addQuantity(newItem.getQuantity());
+                return Result.SUCCESS;
+            }
+        }
+
+        items.add(newItem);
         return Result.SUCCESS;
     }
 
