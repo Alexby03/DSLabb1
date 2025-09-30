@@ -43,6 +43,7 @@ public record UserDAO(
             stmt.setString(5, userDao.fullName);
             stmt.setString(6, userDao.paymentMethod);
             stmt.setString(7, userDao.userType.name());
+            stmt.setBoolean(8, userDao.isActive);
 
             return stmt.executeUpdate() > 0 ? Result.SUCCESS : Result.FAILED;
 

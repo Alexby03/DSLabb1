@@ -11,13 +11,15 @@ import java.util.List;
 
 public class ProductService {
 
-    public static Result registerProduct(Product newProduct, UserType userType) {
+    public Result registerProduct(Product newProduct, UserType userType) {
         if(!UserType.ADMIN.equals(userType)) return Result.PRIVILEGE;
-        ProductDAO.createProduct(new ProductDAO(newProduct.getSku(),
+        if (newProduct == null || newProduct.getSku() == null || newProduct.getSku().isBlank()) return Result.FAILED;
+        if (newProduct.getPrice() < 0 || newProduct.getQuantity() < 0) return Result.FAILED;
+
+        return ProductDAO.createProduct(new ProductDAO(newProduct.getSku(),
                 newProduct.getName(), newProduct.getDescription(),
                 newProduct.getCategory(), newProduct.getQuantity(),
                 newProduct.getPrice(), newProduct.isRetired()));
-        return Result.SUCCESS;
     }
 
     public List<Product> findProductByCategoryAndName(String search, Category category) {
