@@ -1,4 +1,4 @@
-package se.kth.webapp.dslabb1.models.enums;
+package se.kth.webapp.dslabb1.bo.models.enums;
 
 public enum OrderStatus {
     CANCELED,

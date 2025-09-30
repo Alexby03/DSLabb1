@@ -1,11 +1,14 @@
-package se.kth.webapp.dslabb1.models;
+package se.kth.webapp.dslabb1.bo.models;
+
+import se.kth.webapp.dslabb1.bo.models.enums.Result;
+import se.kth.webapp.dslabb1.bo.models.enums.UserType;
 
 import java.util.UUID;
 
 /**
- * Customer implements User. orders are fetched from DB when needed.
+ * Customer implements IUser. orders are fetched from DB when needed.
  */
-public class Customer implements User {
+public class Customer implements IUser {
     private final UUID customerId;
     private final String email;
     private final String passwordHash;

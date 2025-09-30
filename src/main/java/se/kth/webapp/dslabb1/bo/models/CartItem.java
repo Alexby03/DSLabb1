@@ -1,4 +1,4 @@
-package se.kth.webapp.dslabb1.models;
+package se.kth.webapp.dslabb1.bo.models;
 
 public class CartItem {
     private final String sku;

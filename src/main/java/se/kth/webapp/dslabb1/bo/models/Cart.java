@@ -1,6 +1,6 @@
-package se.kth.webapp.dslabb1.models;
+package se.kth.webapp.dslabb1.bo.models;
 
-import se.kth.webapp.dslabb1.models.enums.Result;
+import se.kth.webapp.dslabb1.bo.models.enums.Result;
 
 import java.io.Serializable;
 import java.util.ArrayList;
@@ -15,9 +15,8 @@ public class Cart implements Serializable {
     private final UUID customerId;
     private List<CartItem> items;
 
-    public Cart(UUID customerId, String sku, List<CartItem> items) {
+    public Cart(UUID customerId, List<CartItem> items) {
         if (customerId == null) throw new IllegalArgumentException("customerId required");
-        if (sku == null || sku.isBlank()) throw new IllegalArgumentException("sku required");
         this.customerId = customerId;
         this.items = new ArrayList<>(items);
     }

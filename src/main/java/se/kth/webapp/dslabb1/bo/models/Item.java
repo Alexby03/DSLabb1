@@ -1,4 +1,4 @@
-package se.kth.webapp.dslabb1.models;
+package se.kth.webapp.dslabb1.bo.models;
 
 import java.io.Serializable;
 import java.util.Objects;

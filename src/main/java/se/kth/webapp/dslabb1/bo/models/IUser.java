@@ -1,18 +1,11 @@
-package se.kth.webapp.dslabb1.models;
+package se.kth.webapp.dslabb1.bo.models;
 
 import java.util.UUID;
 
-public interface User {
+public interface IUser {
     UUID getId();
     String getEmail();
     String getPasswordHash();
     String getFullName();
-
-    enum UserType {
-        CUSTOMER,
-        ADMIN,
-        WAREHOUSEWORKER
-    }
-
     UserType getUserType();
 }
