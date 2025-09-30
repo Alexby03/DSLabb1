@@ -10,6 +10,7 @@ public class Worker implements IUser {
     private String email;
     private String passwordHash;
     private String fullName;
+    private Boolean isActive;
 
     public Worker(UUID id, String email, String passwordHash, String fullName,  Boolean isActive) {
         this.workerId = id;
@@ -24,4 +25,12 @@ public class Worker implements IUser {
     @Override public String getPasswordHash() { return passwordHash; }
     @Override public String getFullName() { return fullName; }
     @Override public UserType getUserType() { return UserType.WAREHOUSEWORKER; }
+
+    @Override
+    public Boolean isActive() {return isActive;}
+
+    @Override
+    public Boolean isInactive() {
+        return !isActive;
+    }
 }

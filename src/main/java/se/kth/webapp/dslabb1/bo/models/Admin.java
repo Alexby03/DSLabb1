@@ -11,6 +11,7 @@ public class Admin implements IUser {
     private String email;
     private String passwordHash;
     private String fullName;
+    private Boolean isActive;
 
     public Admin(UUID adminId, String email, String passwordHash, String fullName, Boolean isActive) {
         this.adminId = adminId;
@@ -42,6 +43,6 @@ public class Admin implements IUser {
 
     @Override
     public Boolean isInactive() {
-        return isActive;
+        return !isActive;
     }
 }

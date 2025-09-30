@@ -19,7 +19,7 @@ public class Product implements Serializable {
     private double price;
     private boolean retired;
 
-    public Product(String sku, String name, String description, Category category, double price, int quantity, boolean retired) {
+    public Product(String sku, String name, String description, Category category, int quantity, double price, boolean retired) {
         if (sku == null || sku.isBlank()) throw new IllegalArgumentException("sku required");
         this.sku = sku;
         this.name = name;

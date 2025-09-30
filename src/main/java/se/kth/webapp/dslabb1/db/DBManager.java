@@ -1,4 +1,4 @@
-package se.kth.webapp.dslabb1.db.data;
+package se.kth.webapp.dslabb1.db;
 
 import java.sql.Connection;
 import java.sql.DriverManager;

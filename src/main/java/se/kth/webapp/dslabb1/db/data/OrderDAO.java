@@ -3,6 +3,7 @@ package se.kth.webapp.dslabb1.db.data;
 import se.kth.webapp.dslabb1.bo.models.*;
 import se.kth.webapp.dslabb1.bo.models.enums.OrderStatus;
 import se.kth.webapp.dslabb1.bo.models.enums.Result;
+import se.kth.webapp.dslabb1.db.DBManager;
 import java.sql.*;
 import java.sql.Date;
 import java.time.LocalDate;
@@ -141,25 +142,6 @@ public record OrderDAO(
 
         } catch (SQLException e) {
             System.err.println("Error updating order status: " + e.getMessage());
-            return Result.FAILED;
-        }
-    }
-
-    /**
-     * Delete order
-     */
-    public static Result deleteOrder(UUID orderId) {
-        String sql = "DELETE FROM T_Order WHERE orderId = ?";
-
-        try (Connection conn = DBManager.getConnection();
-             PreparedStatement stmt = conn.prepareStatement(sql)) {
-
-            stmt.setString(1, orderId.toString());
-
-            return stmt.executeUpdate() > 0 ? Result.SUCCESS : Result.FAILED;
-
-        } catch (SQLException e) {
-            System.err.println("Error deleting order: " + e.getMessage());
             return Result.FAILED;
         }
     }

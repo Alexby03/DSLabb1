@@ -1,9 +1,9 @@
 package se.kth.webapp.dslabb1.db.data;
 
-package se.kth.webapp.dslabb1.data;
+import se.kth.webapp.dslabb1.bo.models.*;
+import se.kth.webapp.dslabb1.bo.models.enums.Result;
+import se.kth.webapp.dslabb1.db.DBManager;
 
-import se.kth.webapp.dslabb1.models.*;
-import se.kth.webapp.dslabb1.models.enums.Result;
 import java.sql.*;
 import java.util.*;
 
@@ -23,7 +23,7 @@ public record CartDAO(
         String sql = "INSERT INTO T_Cart (userId, sku, quantity) VALUES (?, ?, ?) " +
                 "ON DUPLICATE KEY UPDATE quantity = quantity + VALUES(quantity)";
 
-        try (Connection conn = DatabaseConnection.getConnection();
+        try (Connection conn = DBManager.getConnection();
              PreparedStatement stmt = conn.prepareStatement(sql)) {
 
             stmt.setString(1, userId.toString());
@@ -45,7 +45,7 @@ public record CartDAO(
         List<CartDAO> cartItems = new ArrayList<>();
         String sql = "SELECT * FROM T_Cart WHERE userId = ?";
 
-        try (Connection conn = DatabaseConnection.getConnection();
+        try (Connection conn = DBManager.getConnection();
              PreparedStatement stmt = conn.prepareStatement(sql)) {
 
             stmt.setString(1, userId.toString());
@@ -76,7 +76,7 @@ public record CartDAO(
                 "FROM T_Cart c JOIN T_Product p ON c.sku = p.sku " +
                 "WHERE c.userId = ?";
 
-        try (Connection conn = DatabaseConnection.getConnection();
+        try (Connection conn = DBManager.getConnection();
              PreparedStatement stmt = conn.prepareStatement(sql)) {
 
             stmt.setString(1, userId.toString());
@@ -109,7 +109,7 @@ public record CartDAO(
 
         String sql = "UPDATE T_Cart SET quantity = ? WHERE userId = ? AND sku = ?";
 
-        try (Connection conn = DatabaseConnection.getConnection();
+        try (Connection conn = DBManager.getConnection();
              PreparedStatement stmt = conn.prepareStatement(sql)) {
 
             stmt.setInt(1, newQuantity);
@@ -130,7 +130,7 @@ public record CartDAO(
     public static Result removeItemFromCart(UUID userId, String sku) {
         String sql = "DELETE FROM T_Cart WHERE userId = ? AND sku = ?";
 
-        try (Connection conn = DatabaseConnection.getConnection();
+        try (Connection conn = DBManager.getConnection();
              PreparedStatement stmt = conn.prepareStatement(sql)) {
 
             stmt.setString(1, userId.toString());
@@ -150,7 +150,7 @@ public record CartDAO(
     public static Result clearCart(UUID userId) {
         String sql = "DELETE FROM T_Cart WHERE userId = ?";
 
-        try (Connection conn = DatabaseConnection.getConnection();
+        try (Connection conn = DBManager.getConnection();
              PreparedStatement stmt = conn.prepareStatement(sql)) {
 
             stmt.setString(1, userId.toString());

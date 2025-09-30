@@ -6,6 +6,8 @@ import se.kth.webapp.dslabb1.bo.models.IUser;
 import se.kth.webapp.dslabb1.bo.models.Worker;
 import se.kth.webapp.dslabb1.bo.models.enums.UserType;
 import se.kth.webapp.dslabb1.bo.models.enums.Result;
+import se.kth.webapp.dslabb1.db.DBManager;
+
 import java.sql.*;
 import java.util.*;
 
@@ -29,7 +31,7 @@ public record UserDAO(
      * Create a new user in the database
      */
     public static Result createUser(UserDAO userDao) {
-        String sql = "INSERT INTO T_User (userId, email, userPassword, address, fullName, paymentMethod, userType) VALUES (?, ?, ?, ?, ?, ?, ?)";
+        String sql = "INSERT INTO T_User (userId, email, userPassword, address, fullName, paymentMethod, userType, isActive) VALUES (?, ?, ?, ?, ?, ?, ?, ?)";
 
         try (Connection conn = DBManager.getConnection();
              PreparedStatement stmt = conn.prepareStatement(sql)) {
@@ -201,8 +203,8 @@ public record UserDAO(
                 }
                 yield customer;
             }
-            case ADMIN -> new Admin(this.userId, this.email, this.userPassword, this.fullName);
-            case WAREHOUSEWORKER -> new Worker(this.userId, this.email, this.userPassword, this.fullName);
+            case ADMIN -> new Admin(this.userId, this.email, this.userPassword, this.fullName, this.isActive);
+            case WAREHOUSEWORKER -> new Worker(this.userId, this.email, this.userPassword, this.fullName, this.isActive);
         };
     }
 

@@ -3,6 +3,7 @@ package se.kth.webapp.dslabb1.db.data;
 import se.kth.webapp.dslabb1.bo.models.Product;
 import se.kth.webapp.dslabb1.bo.models.enums.Category;
 import se.kth.webapp.dslabb1.bo.models.enums.Result;
+import se.kth.webapp.dslabb1.db.DBManager;
 import java.sql.*;
 import java.util.*;
 
@@ -73,6 +74,49 @@ public record ProductDAO(
             System.err.println("Error finding product by SKU: " + e.getMessage());
         }
         return null;
+    }
+
+    /**
+     * Find product by name and or category
+     */
+    public static List<ProductDAO> findByCategoryAndName(Category category, String productName) {
+        if (category == null) return new ArrayList<>();
+
+        List<ProductDAO> products = new ArrayList<>();
+        String sql;
+
+        if (productName != null && !productName.isBlank()) { //dubbelkolla de här kraven sen när vi testar i UI
+            sql = "SELECT * FROM T_Product WHERE category = ? AND productName LIKE ?";
+        } else {
+            sql = "SELECT * FROM T_Product WHERE category = ?";
+        }
+
+        try (Connection conn = DBManager.getConnection();
+             PreparedStatement stmt = conn.prepareStatement(sql)) {
+
+            stmt.setString(1, category.name());
+            if (productName != null && !productName.isBlank()) {
+                stmt.setString(2, "%" + productName.trim() + "%");
+            }
+
+            try (ResultSet rs = stmt.executeQuery()) {
+                while (rs.next()) {
+                    products.add(new ProductDAO(
+                            rs.getString("sku"),
+                            rs.getString("productName"),
+                            rs.getString("productDescription"),
+                            Category.valueOf(rs.getString("category")),
+                            rs.getInt("quantity"),
+                            rs.getDouble("price"),
+                            rs.getBoolean("isRetired")
+                    ));
+                }
+            }
+
+        } catch (SQLException e) {
+            System.err.println("Error finding products by category or name: " + e.getMessage());
+        }
+        return products;
     }
 
     /**
@@ -156,11 +200,31 @@ public record ProductDAO(
     }
 
     /**
+     * Update product stock
+     */
+    public static Result changePrice(String sku, double newPrice) {
+        String sql = "UPDATE T_Product SET price = ? WHERE sku = ?";
+
+        try (Connection conn = DBManager.getConnection();
+             PreparedStatement stmt = conn.prepareStatement(sql)) {
+
+            stmt.setDouble(1, newPrice);
+            stmt.setString(2, sku);
+
+            return stmt.executeUpdate() > 0 ? Result.SUCCESS : Result.FAILED;
+
+        } catch (SQLException e) {
+            System.err.println("Error updating Price: " + e.getMessage());
+            return Result.FAILED;
+        }
+    }
+
+    /**
      * Convert ProductDAO to domain model Product
      */
     public Product toDomainModel() {
         return new Product(this.sku, this.productName, this.productDescription,
-                this.category, this.price, this.quantity, this.isRetired);
+                this.category, this.quantity, this.price, this.isRetired);
     }
 
     /**

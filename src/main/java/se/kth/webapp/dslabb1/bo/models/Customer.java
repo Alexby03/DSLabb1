@@ -14,12 +14,15 @@ public class Customer implements IUser {
     private final String passwordHash;
     private final String fullName;
     private String address;
+    private Boolean isActive;
 
-    public Customer(UUID customerId ,String email, String passwordHash, String fullName) {
+    public Customer(UUID customerId ,String email, String passwordHash, String address,String fullName, Boolean isActive) {
         this.customerId = customerId;
         this.email = email;
         this.passwordHash = passwordHash;
         this.fullName = fullName;
+        this.address = address;
+        this.isActive = isActive;
     }
 
     // NOTE: do NOT store List<Order> here by default, use DAO to fetch orders
@@ -48,6 +51,15 @@ public class Customer implements IUser {
     @Override
     public UserType getUserType() {
         return UserType.CUSTOMER;
+    }
+
+    @Override
+    public Boolean isActive() {return isActive;}
+
+
+    @Override
+    public Boolean isInactive(){
+        return !isActive;
     }
 
     public String getAddress() {
