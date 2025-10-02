@@ -148,4 +148,9 @@ public class CartService {
         }
     }
 
+    public List<CartItem> getAllItems(UUID userId, UserType userType){
+        if (!UserType.CUSTOMER.equals(userType)) return null;
+        return CartDAO.getCartForUser(userId).getItems();
+    }
+
 }

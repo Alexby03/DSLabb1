@@ -147,7 +147,7 @@ public record CartDAO(
     /**
      * Clear entire cart for a user
      */
-    public static Result clearCart(UUID userId) {
+    public static Result clearCart(UUID userId) throws SQLException{
         String sql = "DELETE FROM T_Cart WHERE userId = ?";
 
         try (Connection conn = DBManager.getConnection();
@@ -157,9 +157,6 @@ public record CartDAO(
 
             return stmt.executeUpdate() > 0 ? Result.SUCCESS : Result.FAILED;
 
-        } catch (SQLException e) {
-            System.err.println("Error clearing cart: " + e.getMessage());
-            return Result.FAILED;
         }
     }
 

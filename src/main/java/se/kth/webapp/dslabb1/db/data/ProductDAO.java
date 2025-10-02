@@ -4,6 +4,8 @@ import se.kth.webapp.dslabb1.bo.models.Product;
 import se.kth.webapp.dslabb1.bo.models.enums.Category;
 import se.kth.webapp.dslabb1.bo.models.enums.Result;
 import se.kth.webapp.dslabb1.db.DBManager;
+
+import java.math.BigDecimal;
 import java.sql.*;
 import java.util.*;
 
@@ -34,7 +36,7 @@ public record ProductDAO(
             stmt.setString(3, productDao.productDescription);
             stmt.setString(4, productDao.category.name());
             stmt.setInt(5, productDao.quantity);
-            stmt.setDouble(6, productDao.price);
+            stmt.setBigDecimal(6, BigDecimal.valueOf(productDao.price));
             stmt.setBoolean(7, productDao.isRetired);
 
             return stmt.executeUpdate() > 0 ? Result.SUCCESS : Result.FAILED;
@@ -182,7 +184,7 @@ public record ProductDAO(
     /**
      * Update product stock
      */
-    public static Result updateStock(String sku, int newQuantity) {
+    public static Result updateStock(String sku, int newQuantity) throws SQLException {
         String sql = "UPDATE T_Product SET quantity = ? WHERE sku = ?";
 
         try (Connection conn = DBManager.getConnection();
@@ -193,9 +195,6 @@ public record ProductDAO(
 
             return stmt.executeUpdate() > 0 ? Result.SUCCESS : Result.FAILED;
 
-        } catch (SQLException e) {
-            System.err.println("Error updating stock: " + e.getMessage());
-            return Result.FAILED;
         }
     }
 
@@ -208,7 +207,7 @@ public record ProductDAO(
         try (Connection conn = DBManager.getConnection();
              PreparedStatement stmt = conn.prepareStatement(sql)) {
 
-            stmt.setDouble(1, newPrice);
+            stmt.setBigDecimal(1, BigDecimal.valueOf(newPrice));
             stmt.setString(2, sku);
 
             return stmt.executeUpdate() > 0 ? Result.SUCCESS : Result.FAILED;

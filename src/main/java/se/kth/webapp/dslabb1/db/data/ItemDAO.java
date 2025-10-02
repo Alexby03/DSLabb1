@@ -19,23 +19,17 @@ public record ItemDAO(
     /**
      * Create a new item
      */
-    public static Result createItem(ItemDAO itemDao) {
+    public static Result createItem(Connection conn, Item item) throws SQLException {
+
         String sql = "INSERT INTO T_Item (orderId, sku, quantity) VALUES (?, ?, ?)";
-
-        try (Connection conn = DBManager.getConnection();
-             PreparedStatement stmt = conn.prepareStatement(sql)) {
-
-            stmt.setString(1, itemDao.orderId.toString());
-            stmt.setString(2, itemDao.sku);
-            stmt.setInt(3, itemDao.quantity);
-
-            return stmt.executeUpdate() > 0 ? Result.SUCCESS : Result.FAILED;
-
-        } catch (SQLException e) {
-            System.err.println("Error creating item: " + e.getMessage());
-            return Result.FAILED;
+        try (PreparedStatement ps = conn.prepareStatement(sql)) {
+            ps.setString(1, item.getOrderId().toString());
+            ps.setString(2, item.getSku());
+            ps.setInt(3, item.getQuantity());
+            return ps.executeUpdate() > 0 ? Result.SUCCESS : Result.FAILED;
         }
     }
+
 
     /**
      * Find items by order ID with product information

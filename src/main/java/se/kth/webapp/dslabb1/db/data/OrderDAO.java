@@ -4,6 +4,8 @@ import se.kth.webapp.dslabb1.bo.models.*;
 import se.kth.webapp.dslabb1.bo.models.enums.OrderStatus;
 import se.kth.webapp.dslabb1.bo.models.enums.Result;
 import se.kth.webapp.dslabb1.db.DBManager;
+
+import java.math.BigDecimal;
 import java.sql.*;
 import java.sql.Date;
 import java.time.LocalDate;
@@ -18,25 +20,21 @@ public record OrderDAO(
         OrderStatus orderStatus
 ) {
 
-    public static Result createOrder(OrderDAO orderDao) {
+    /**
+     * Create order, transaction and exceptions handled outside method
+     */
+    public static Result createOrder(Connection conn, Order order) throws SQLException {
         String sql = "INSERT INTO T_Order (orderId, userId, totalAmount, dateOfPurchase, orderStatus) VALUES (?, ?, ?, ?, ?)";
-
-        try (Connection conn = DBManager.getConnection();
-            PreparedStatement stmt = conn.prepareStatement(sql)) {
-
-            stmt.setString(1, orderDao.orderId.toString());
-            stmt.setString(2, orderDao.userId.toString());
-            stmt.setDouble(3, orderDao.totalAmount);
-            stmt.setDate(4, Date.valueOf(orderDao.dateOfPurchase));
-            stmt.setString(5, orderDao.orderStatus.name());
-
-            return stmt.executeUpdate() > 0 ? Result.SUCCESS : Result.FAILED;
-
-        } catch (SQLException e) {
-            System.err.println("Error creating order: " + e.getMessage());
-            return Result.FAILED;
+        try (PreparedStatement ps = conn.prepareStatement(sql)) {
+            ps.setString(1, order.getOrderId().toString());
+            ps.setString(2, order.getCustomerId().toString());
+            ps.setBigDecimal(3, BigDecimal.valueOf(order.getTotalAmount()));
+            ps.setTimestamp(4, java.sql.Timestamp.valueOf(order.getDateOfPurchase()));
+            ps.setString(5, order.getOrderStatus().name());
+            return ps.executeUpdate() > 0 ? Result.SUCCESS : Result.FAILED;
         }
     }
+
 
     /**
      * Find order by ID

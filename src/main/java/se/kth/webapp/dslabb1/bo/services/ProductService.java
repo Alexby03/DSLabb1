@@ -1,11 +1,16 @@
 package se.kth.webapp.dslabb1.bo.services;
 
+import com.mysql.cj.MysqlConnection;
+import com.mysql.cj.exceptions.ClosedOnExpiredPasswordException;
 import se.kth.webapp.dslabb1.bo.models.Product;
 import se.kth.webapp.dslabb1.bo.models.enums.Category;
 import se.kth.webapp.dslabb1.bo.models.enums.Result;
 import se.kth.webapp.dslabb1.bo.models.enums.UserType;
+import se.kth.webapp.dslabb1.db.DBManager;
 import se.kth.webapp.dslabb1.db.data.ProductDAO;
 
+import java.sql.Connection;
+import java.sql.SQLException;
 import java.util.ArrayList;
 import java.util.List;
 
@@ -42,12 +47,22 @@ public class ProductService {
         if(!UserType.ADMIN.equals(userType)) return Result.PRIVILEGE;
 
         product.increaseQuantity(plusQuantity);
-        return ProductDAO.updateStock(product.getSku(), product.getQuantity());
+        try {
+            return ProductDAO.updateStock(product.getSku(), product.getQuantity());
+        } catch (SQLException e) {
+            System.err.println("Error increasing stock " + product.getSku());
+            return Result.FAILED;
+        }
     }
 
     public Result decreaseQuantity(Product product, int minusQuantity) {
         product.decreaseQuantity(minusQuantity);
-        return ProductDAO.updateStock(product.getSku(), product.getQuantity());
+        try{
+            return ProductDAO.updateStock(product.getSku(), product.getQuantity());
+        } catch (SQLException e) {
+            System.err.println("Error decreasing stock " + product.getQuantity());
+            return Result.FAILED;
+        }
     }
 
     public Result changePrice(Product product, double newPrice, UserType userType) {
