@@ -20,7 +20,7 @@ import java.util.*;
 public class OrderService {
 
 
-    public Result createOrderFromCart(UUID userId, Cart cart, Order order) {
+    public static Result createOrderFromCart(UUID userId, Cart cart, Order order) {
         try (Connection conn = DBManager.getConnection()) {
             conn.setAutoCommit(false);
             try {
@@ -57,7 +57,7 @@ public class OrderService {
 
     }
 
-    public Result cancelOrder(UUID userId, UUID orderId, UserType userType) {
+    public static Result cancelOrder(UUID userId, UUID orderId, UserType userType) {
         if (userId == null || orderId == null) {
             return Result.FAILED;
         }
@@ -75,7 +75,7 @@ public class OrderService {
                 // Auth check if customer owns order or is admin
                 if (UserType.CUSTOMER.equals(userType) && !currentOrder.userId().equals(userId)) {
                     conn.rollback();
-                    return Result.PRIVILEGE;
+                    return Result.FAILED;
                 }
                 if (!UserType.ADMIN.equals(userType) && !UserType.CUSTOMER.equals(userType)) {
                     conn.rollback();
@@ -90,11 +90,11 @@ public class OrderService {
                 OrderDAO.updateOrderStatus(orderId, OrderStatus.CANCELED);
 
                 List<ItemDAO> orderItems = ItemDAO.findByOrderId(orderId);
-                for (ItemDAO itemDao : orderItems) {
-                    ProductDAO product = ProductDAO.findBySku(itemDao.sku());
+                for (ItemDAO itemDAO : orderItems) {
+                    ProductDAO product = ProductDAO.findBySku(itemDAO.sku());
                     if (product != null) {
-                        int newStock = product.quantity() + itemDao.quantity();
-                        Result stockUpdate = ProductDAO.updateStock(itemDao.sku(), newStock);
+                        int newStock = product.quantity() + itemDAO.quantity();
+                        Result stockUpdate = ProductDAO.updateStock(itemDAO.sku(), newStock);
                         if (stockUpdate != Result.SUCCESS) {
                             conn.rollback();
                             return Result.FAILED;
@@ -115,7 +115,7 @@ public class OrderService {
         }
     }
 
-    public Result updateOrderStatus(UUID orderId, OrderStatus newStatus, UserType  userType) {
+    public static Result updateOrderStatus(UUID orderId, OrderStatus newStatus, UserType  userType) {
         if(!UserType.ADMIN.equals(userType) && !UserType.WAREHOUSEWORKER.equals(userType)) return Result.PRIVILEGE;
 
         if(orderId == null || newStatus == null) {
@@ -149,7 +149,7 @@ public class OrderService {
         }
     }
 
-    public Order getOrderById(UUID orderId, UUID requestingUserId, UserType userType) {
+    public static Order getOrderById(UUID orderId, UUID requestingUserId, UserType userType) {
         if (orderId == null || requestingUserId == null) {
             return null;
         }
@@ -178,7 +178,7 @@ public class OrderService {
         }
     }
 
-    public List<Order> getCustomerOrders(UUID customerId, UUID requestingUserId, UserType userType) {
+    public static List<Order> getCustomerOrders(UUID customerId, UUID requestingUserId, UserType userType) {
         if (UserType.CUSTOMER.equals(userType) && !customerId.equals(requestingUserId)) {
             return new ArrayList<>();
         }
@@ -207,7 +207,7 @@ public class OrderService {
         }
     }
 
-    public double calculateOrderTotal(UUID orderId, UserType userType) {
+    public static double calculateOrderTotal(UUID orderId, UserType userType) {
         if (orderId == null) {
             return 0.0;
         }
@@ -227,7 +227,7 @@ public class OrderService {
         }
     }
 
-    public int getOrderItemCount(UUID orderId, UserType userType) {
+    public static int getOrderItemCount(UUID orderId, UserType userType) {
         if (orderId == null) {
             return 0;
         }

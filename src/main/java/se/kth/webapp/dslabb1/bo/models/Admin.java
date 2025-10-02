@@ -28,9 +28,6 @@ public class Admin implements IUser {
     public String getEmail() { return email; }
 
     @Override
-    public String getPasswordHash() { return passwordHash; }
-
-    @Override
     public String getFullName() { return fullName; }
 
     @Override

@@ -16,7 +16,7 @@ import java.util.List;
 
 public class ProductService {
 
-    public Result registerProduct(Product newProduct, UserType userType) {
+    public static Result registerProduct(Product newProduct, UserType userType) {
         if(!UserType.ADMIN.equals(userType)) return Result.PRIVILEGE;
         if (newProduct == null || newProduct.getSku() == null || newProduct.getSku().isBlank()) return Result.FAILED;
         if (newProduct.getPrice() < 0 || newProduct.getQuantity() < 0) return Result.FAILED;
@@ -27,10 +27,15 @@ public class ProductService {
                 newProduct.getPrice(), newProduct.isRetired()));
     }
 
-    public List<Product> findProductByCategoryAndName(String search, Category category) {
-        if (search == null || search.isBlank()) return null;
+    /**
+     * Attempts to find a product by category and / or name.
+     * @param category enum, product category.
+     * @param productName string, name of product.
+     * @return list of products matching the query.
+     */
+    public static List<Product> findProductByCategoryAndName(String productName, Category category) {
         try{
-            List<ProductDAO> foundProducts = ProductDAO.findByCategoryAndName(category, search);
+            List<ProductDAO> foundProducts = ProductDAO.findByCategoryAndName(category, productName);
             List<Product> products = new ArrayList<>();
             for(ProductDAO productDAO : foundProducts){
                 products.add(new Product(productDAO.sku(), productDAO.productName(), productDAO.productDescription(),
@@ -38,12 +43,12 @@ public class ProductService {
             }
             return products;
         } catch (Exception e) {
-            System.err.println("Error finding product by NAME " + search);
+            System.err.println("Error finding product by NAME " + productName);
             return null;
         }
     }
 
-    public Result increaseQuantity(Product product, int plusQuantity, UserType userType) {
+    public static Result increaseQuantity(Product product, int plusQuantity, UserType userType) {
         if(!UserType.ADMIN.equals(userType)) return Result.PRIVILEGE;
 
         product.increaseQuantity(plusQuantity);
@@ -55,7 +60,7 @@ public class ProductService {
         }
     }
 
-    public Result decreaseQuantity(Product product, int minusQuantity) {
+    public static Result decreaseQuantity(Product product, int minusQuantity) {
         product.decreaseQuantity(minusQuantity);
         try{
             return ProductDAO.updateStock(product.getSku(), product.getQuantity());
@@ -65,20 +70,20 @@ public class ProductService {
         }
     }
 
-    public Result changePrice(Product product, double newPrice, UserType userType) {
+    public static Result changePrice(Product product, double newPrice, UserType userType) {
         if(!UserType.ADMIN.equals(userType)) return Result.PRIVILEGE;
         return ProductDAO.changePrice(product.getSku(), newPrice);
     }
 
-    public boolean isInStock(Product product) {
+    public static boolean isInStock(Product product) {
         return product.getQuantity() > 0;
     }
 
-    public boolean isRetired(Product product) {
+    public static boolean isRetired(Product product) {
         return product.isRetired();
     }
 
-    public Product findProductBySKU(String sku){
+    public static Product findProductBySKU(String sku){
         if (sku == null || sku.isBlank()) return null;
 
         try{
@@ -90,7 +95,7 @@ public class ProductService {
         }
     }
 
-    public List<Product> getAllProducts() {
+    public static List<Product> getAllProducts() {
         try {
             List<ProductDAO> foundProducts = ProductDAO.findAll();
             List<Product> products = new ArrayList<>();

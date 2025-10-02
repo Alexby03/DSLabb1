@@ -12,7 +12,7 @@ import javax.swing.plaf.PanelUI;
 
 public class ItemService {
 
-    public Result createOrderItem(UUID orderId, String sku, String productName, double price ,int quantity) {
+    public static Result createOrderItem(UUID orderId, String sku, String productName, double price ,int quantity) {
 
         if(orderId == null || sku == null || sku.isBlank() || quantity <=0) return Result.FAILED;
 
@@ -26,7 +26,7 @@ public class ItemService {
         }
     }
 
-    public List<ItemDAO> getOrderItems(UUID orderId) {
+    public static List<ItemDAO> getOrderItems(UUID orderId) {
         if (orderId == null) return null;
 
         try {
@@ -38,7 +38,7 @@ public class ItemService {
         }
     }
 
-    public List<Item> getOrderItemsWithDetails(UUID orderId) {
+    public static List<Item> getOrderItemsWithDetails(UUID orderId) {
 
         if (orderId == null) {
             return new ArrayList<>();

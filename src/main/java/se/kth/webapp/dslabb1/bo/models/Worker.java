@@ -22,7 +22,6 @@ public class Worker implements IUser {
 
     @Override public UUID getId() { return workerId; }
     @Override public String getEmail() { return email; }
-    @Override public String getPasswordHash() { return passwordHash; }
     @Override public String getFullName() { return fullName; }
     @Override public UserType getUserType() { return UserType.WAREHOUSEWORKER; }
 

@@ -9,8 +9,7 @@ import java.util.*;
 
 public class CartService {
 
-
-    public Result addItemToCart(UUID userId, String sku, int quantity, UserType userType) {
+    public static Result addItemToCart(UUID userId, String sku, int quantity, UserType userType) {
         if (!UserType.CUSTOMER.equals(userType)) return Result.PRIVILEGE;
 
         if (userId == null || sku == null || sku.isBlank() || quantity <= 0) {
@@ -32,7 +31,7 @@ public class CartService {
     }
 
 
-    public Result updateCartItemQuantity(UUID userId, String sku, int newQuantity, UserType userType) {
+    public static Result updateCartItemQuantity(UUID userId, String sku, int newQuantity, UserType userType) {
         if (!UserType.CUSTOMER.equals(userType)) return Result.PRIVILEGE;
 
         if (userId == null || sku == null || sku.isBlank() || newQuantity < 0) {
@@ -58,7 +57,7 @@ public class CartService {
     }
 
 
-    public Result removeItemFromCart(UUID userId, String sku, UserType userType) {
+    public static Result removeItemFromCart(UUID userId, String sku, UserType userType) {
         if (!UserType.CUSTOMER.equals(userType)) return Result.PRIVILEGE;
 
         if (userId == null || sku == null || sku.isBlank()) {
@@ -74,7 +73,7 @@ public class CartService {
     }
 
 
-    public Result clearCart(UUID userId, UserType userType) {
+    public static Result clearCart(UUID userId, UserType userType) {
         if (!UserType.CUSTOMER.equals(userType)) return Result.PRIVILEGE;
 
         if (userId == null) {
@@ -90,7 +89,7 @@ public class CartService {
     }
 
 
-    public Cart getUserCart(UUID userId, UserType userType) {
+    public static Cart getUserCart(UUID userId, UserType userType) {
         if (!UserType.CUSTOMER.equals(userType) && !UserType.ADMIN.equals(userType)) {
             return null;
         }
@@ -108,7 +107,7 @@ public class CartService {
     }
 
 
-    public double getCartTotal(UUID userId, UserType userType) {
+    public static double getCartTotal(UUID userId, UserType userType) {
         Cart cart = getUserCart(userId, userType);
         if (cart == null) {
             return 0.0;
@@ -128,7 +127,7 @@ public class CartService {
         }
     }
 
-    public int getCartItemCount(UUID userId, UserType userType) {
+    public static int getCartItemCount(UUID userId, UserType userType) {
         Cart cart = getUserCart(userId, userType);
         if (cart == null) {
             return 0;
@@ -148,7 +147,7 @@ public class CartService {
         }
     }
 
-    public List<CartItem> getAllItems(UUID userId, UserType userType){
+    public static List<CartItem> getAllItems(UUID userId, UserType userType){
         if (!UserType.CUSTOMER.equals(userType)) return null;
         return CartDAO.getCartForUser(userId).getItems();
     }

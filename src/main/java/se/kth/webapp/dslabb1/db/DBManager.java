@@ -14,14 +14,13 @@ public class DBManager {
     private static final String DB_USER = "admin";
     private static final String DB_PASSWORD = "admin";
 
-    // Load MySQL driver once when class is loaded
-    //static {
-    //    try {
-    //        Class.forName("com.mysql.cj.jdbc.Driver");  // Updated MySQL driver
-    //    } catch (ClassNotFoundException e) {
-    //        throw new RuntimeException("MySQL Driver not found", e);
-    //    }
-    //}
+    static {
+        try {
+            Class.forName("com.mysql.cj.jdbc.Driver");  // Updated MySQL driver
+        } catch (ClassNotFoundException e) {
+            throw new RuntimeException("MySQL Driver not found", e);
+        }
+    }
 
     public static Connection getConnection() throws SQLException {
         try {

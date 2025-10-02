@@ -30,9 +30,10 @@ public record UserDAO(
     /**
      * Create a new user in the database
      */
-    public static Result createUser(UserDAO userDao) {
+    public static Result createUser(IUser user, String userPassword) {
         String sql = "INSERT INTO T_User (userId, email, userPassword, address, fullName, paymentMethod, userType, isActive) VALUES (?, ?, ?, ?, ?, ?, ?, ?)";
 
+        UserDAO userDao = fromDomainModel(user, userPassword);
         try (Connection conn = DBManager.getConnection();
              PreparedStatement stmt = conn.prepareStatement(sql)) {
 
@@ -151,12 +152,13 @@ public record UserDAO(
     /**
      * Update user
      */
-    public static Result updateUser(UserDAO userDao) {
+    public static Result updateUser(IUser user, String userPassword) {
         String sql = "UPDATE T_User SET email = ?, userPassword = ?, address = ?, fullName = ?, paymentMethod = ? WHERE userId = ?";
 
         try (Connection conn = DBManager.getConnection();
              PreparedStatement stmt = conn.prepareStatement(sql)) {
 
+            UserDAO userDao = fromDomainModel(user, userPassword);
 
             stmt.setString(1, userDao.email);
             stmt.setString(2, userDao.userPassword);
@@ -198,7 +200,7 @@ public record UserDAO(
     public IUser toDomainModel() {
         return switch (this.userType) {
             case CUSTOMER -> {
-                Customer customer = new Customer(this.userId, this.email, this.userPassword, this.address, this.fullName, this.isActive);
+                Customer customer = new Customer(this.userId, this.email, this.address, this.fullName, this.paymentMethod,this.isActive);
                 if (this.address != null) {
                     customer.setAddress(this.address);
                 }
@@ -212,14 +214,14 @@ public record UserDAO(
     /**
      * Create UserDAO from domain model User
      */
-    public static UserDAO fromDomainModel(IUser user) {
+    public static UserDAO fromDomainModel(IUser user, String userPassword) {
         String address = (user instanceof Customer customer) ? customer.getAddress() : null;
         String paymentMethod = ""; // Can be expanded later
 
         return new UserDAO(
                 user.getId(),
                 user.getEmail(),
-                user.getPasswordHash(),
+                userPassword,
                 address,
                 user.getFullName(),
                 paymentMethod,

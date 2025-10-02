@@ -79,26 +79,32 @@ public record ProductDAO(
     }
 
     /**
-     * Find product by name and or category
+     * Attempts to find a product by category and / or name.
+     * @param category enum, product category, enter null if all.
+     * @param productName string, name of product, enter null if no specific name search.
+     * @return list of products matching the query.
      */
     public static List<ProductDAO> findByCategoryAndName(Category category, String productName) {
-        if (category == null) return new ArrayList<>();
-
         List<ProductDAO> products = new ArrayList<>();
-        String sql;
+        StringBuilder sql = new StringBuilder("SELECT * FROM T_Product WHERE 1=1");
 
-        if (productName != null && !productName.isBlank()) { //dubbelkolla de här kraven sen när vi testar i UI
-            sql = "SELECT * FROM T_Product WHERE category = ? AND productName LIKE ?";
-        } else {
-            sql = "SELECT * FROM T_Product WHERE category = ?";
+        List<Object> params = new ArrayList<>();
+
+        if (category != null) {
+            sql.append(" AND category = ?");
+            params.add(category.name());
+        }
+        if (productName != null && !productName.isBlank()) {
+            sql.append(" AND productName LIKE ?");
+            params.add("%" + productName.trim() + "%");
         }
 
         try (Connection conn = DBManager.getConnection();
-             PreparedStatement stmt = conn.prepareStatement(sql)) {
+             PreparedStatement stmt = conn.prepareStatement(sql.toString())) {
 
-            stmt.setString(1, category.name());
-            if (productName != null && !productName.isBlank()) {
-                stmt.setString(2, "%" + productName.trim() + "%");
+            for (int i = 0; i < params.size(); i++) {
+                Object p = params.get(i);
+                stmt.setObject(i + 1, p);
             }
 
             try (ResultSet rs = stmt.executeQuery()) {
@@ -114,12 +120,12 @@ public record ProductDAO(
                     ));
                 }
             }
-
         } catch (SQLException e) {
             System.err.println("Error finding products by category or name: " + e.getMessage());
         }
         return products;
     }
+
 
     /**
      * Get all products

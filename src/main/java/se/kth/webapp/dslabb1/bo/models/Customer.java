@@ -11,18 +11,30 @@ import java.util.UUID;
 public class Customer implements IUser {
     private final UUID customerId;
     private final String email;
-    private final String passwordHash;
     private final String fullName;
     private String address;
+    private UserType userType;
+    private String paymentMethod;
     private Boolean isActive;
 
-    public Customer(UUID customerId ,String email, String passwordHash, String address,String fullName, Boolean isActive) {
+    public Customer(UUID customerId ,String email, String address,String fullName, String paymentMethod, Boolean isActive) {
         this.customerId = customerId;
         this.email = email;
-        this.passwordHash = passwordHash;
         this.fullName = fullName;
         this.address = address;
+        this.userType = UserType.CUSTOMER;
+        this.paymentMethod = paymentMethod;
         this.isActive = isActive;
+    }
+
+    public Customer(String email, String address,String fullName) {
+        this.customerId = UUID.randomUUID();
+        this.email = email;
+        this.fullName = fullName;
+        this.address = address;
+        this.userType = UserType.CUSTOMER;
+        this.isActive = true;
+        this.paymentMethod = null;
     }
 
     // NOTE: do NOT store List<Order> here by default, use DAO to fetch orders
@@ -39,18 +51,13 @@ public class Customer implements IUser {
     }
 
     @Override
-    public String getPasswordHash() {
-        return passwordHash;
-    }
-
-    @Override
     public String getFullName() {
         return fullName;
     }
 
     @Override
     public UserType getUserType() {
-        return UserType.CUSTOMER;
+        return this.userType;
     }
 
     @Override
@@ -70,5 +77,12 @@ public class Customer implements IUser {
         this.address = address;
     }
 
+    public String getPaymentMethod() {
+        return paymentMethod;
+    }
+
+    public void setPaymentMethod(String paymentMethod) {
+        this.paymentMethod = paymentMethod;
+    }
 }
 
