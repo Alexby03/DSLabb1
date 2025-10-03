@@ -63,7 +63,6 @@ public class Customer implements IUser {
     @Override
     public Boolean isActive() {return isActive;}
 
-
     @Override
     public Boolean isInactive(){
         return !isActive;

@@ -52,8 +52,8 @@ public class ProductService {
         if(!UserType.ADMIN.equals(userType)) return Result.PRIVILEGE;
 
         product.increaseQuantity(plusQuantity);
-        try {
-            return ProductDAO.updateStock(product.getSku(), product.getQuantity());
+        try (Connection conn = DBManager.getConnection()) {
+            return ProductDAO.updateStock(product.getSku(), product.getQuantity(), conn);
         } catch (SQLException e) {
             System.err.println("Error increasing stock " + product.getSku());
             return Result.FAILED;
@@ -62,8 +62,8 @@ public class ProductService {
 
     public static Result decreaseQuantity(Product product, int minusQuantity) {
         product.decreaseQuantity(minusQuantity);
-        try{
-            return ProductDAO.updateStock(product.getSku(), product.getQuantity());
+        try (Connection conn = DBManager.getConnection()) {
+            return ProductDAO.updateStock(product.getSku(), product.getQuantity(), conn);
         } catch (SQLException e) {
             System.err.println("Error decreasing stock " + product.getQuantity());
             return Result.FAILED;

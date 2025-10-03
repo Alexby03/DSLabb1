@@ -100,6 +100,39 @@ public record CartDAO(
     }
 
     /**
+     * Looks for a cartItem to return
+     * @param userId id of cart owner
+     * @param sku id of product
+     * @return the cartItem, else null if such item does not exist in cart
+     */
+    public static CartItem findCartItemBySKU(UUID userId, String sku) {
+        String sql = "SELECT c.sku, c.quantity, p.productName, p.price " +
+                "FROM T_Cart c JOIN T_Product p ON c.sku = p.sku " +
+                "WHERE c.userId = ? AND c.sku = ?";
+
+        try (Connection conn = DBManager.getConnection();
+             PreparedStatement stmt = conn.prepareStatement(sql)) {
+
+            stmt.setString(1, userId.toString());
+            stmt.setString(2, sku);
+
+            ResultSet rs = stmt.executeQuery();
+
+            if(!rs.next())
+                return null;
+
+            return new CartItem(
+                    rs.getString("sku"),
+                    rs.getString("productName"),
+                    rs.getDouble("price"),
+                    rs.getInt("quantity")
+            );
+        } catch (SQLException e) {
+            throw new RuntimeException(e);
+        }
+    }
+
+    /**
      * Update cart item quantity
      */
     public static Result updateCartItemQuantity(UUID userId, String sku, int newQuantity) {
@@ -147,11 +180,10 @@ public record CartDAO(
     /**
      * Clear entire cart for a user
      */
-    public static Result clearCart(UUID userId) throws SQLException{
+    public static Result clearCart(UUID userId, Connection conn) throws SQLException{
         String sql = "DELETE FROM T_Cart WHERE userId = ?";
 
-        try (Connection conn = DBManager.getConnection();
-             PreparedStatement stmt = conn.prepareStatement(sql)) {
+        try (PreparedStatement stmt = conn.prepareStatement(sql)) {
 
             stmt.setString(1, userId.toString());
 

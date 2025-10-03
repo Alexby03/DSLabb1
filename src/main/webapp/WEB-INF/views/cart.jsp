@@ -33,7 +33,7 @@
 
 <h1>🛒 Kundvagn</h1>
 
-<!-- Messages -->
+<!-- Message control -->
 <c:if test="${not empty successMessage}">
     <div class="success">${successMessage}</div>
 </c:if>
@@ -61,7 +61,7 @@
             <p>SKU: ${item.sku}</p>
             <p class="price">${item.price} kr/st</p>
 
-            <!-- Quantity Controls -->
+            <!-- Quantity -->
             <div class="quantity-controls">
                 <form method="post" action="${pageContext.request.contextPath}/cart" style="display: inline;">
                     <input type="hidden" name="action" value="updateQuantity"/>

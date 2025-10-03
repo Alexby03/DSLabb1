@@ -7,6 +7,7 @@ import jakarta.servlet.RequestDispatcher;
 import java.io.IOException;
 import java.util.List;
 
+import se.kth.webapp.dslabb1.bo.models.CartItem;
 import se.kth.webapp.dslabb1.bo.models.Customer;
 import se.kth.webapp.dslabb1.bo.models.enums.Category;
 import se.kth.webapp.dslabb1.bo.models.Product;
@@ -43,6 +44,12 @@ public class ShopServlet extends HttpServlet {
             cartItemCount = CartService.getCartItemCount(customer.getId(), customer.getUserType());
         }
 
+        String errorMessage = req.getParameter("error");
+        if (errorMessage != null) {
+            req.setAttribute("errorMessage", errorMessage);
+            req.getSession().removeAttribute("errorMessage");
+        }
+
         req.setAttribute("products", products);
         req.setAttribute("categories", Category.values());
         req.setAttribute("selectedCategory", selected);
@@ -61,7 +68,7 @@ public class ShopServlet extends HttpServlet {
         Customer customer = (Customer) session.getAttribute("CUSTOMER");
 
         if (customer == null) {
-            resp.sendRedirect(req.getContextPath() + "/login");
+            resp.sendRedirect(req.getContextPath() + "/logout");
             return;
         }
 
@@ -72,17 +79,28 @@ public class ShopServlet extends HttpServlet {
             String quantityStr = req.getParameter("quantity");
 
             try {
+
                 int quantity = Integer.parseInt(quantityStr);
+                CartItem existing = CartService.getCartItem(customer.getId(), sku);
+                int existingQty = (existing == null) ? 0 : existing.getQuantity();
+                int stock = ProductService.findProductBySKU(sku).getQuantity();
 
-                Result result = CartService.addItemToCart(
-                        customer.getId(), sku, quantity, customer.getUserType());
+                if(quantity + existingQty > stock) {
+                    req.getSession().setAttribute("errorMessage", "Max antal produkter.");
+                    resp.sendRedirect(req.getContextPath() + "/shop?error=Antalet+bestallningar+overskrider+lagret");
 
-                if (result == Result.SUCCESS) {
-                    req.setAttribute("successMessage", "Produkt tillagd i kundvagnen!");
-                } else if (result == Result.PRIVILEGE) {
-                    req.setAttribute("errorMessage", "Du har inte behörighet att lägga till produkter.");
+                    return;
                 } else {
-                    req.setAttribute("errorMessage", "Kunde inte lägga till produkt i kundvagnen.");
+                    Result result = CartService.addItemToCart(
+                            customer.getId(), sku, quantity, customer.getUserType());
+
+                    if (result == Result.SUCCESS) {
+                        req.setAttribute("successMessage", "Produkt tillagd i kundvagnen!");
+                    } else if (result == Result.PRIVILEGE) {
+                        req.setAttribute("errorMessage", "Du har inte behörighet att lägga till produkter.");
+                    } else {
+                        req.setAttribute("errorMessage", "Kunde inte lägga till produkt i kundvagnen.");
+                    }
                 }
 
             } catch (NumberFormatException e) {

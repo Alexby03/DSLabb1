@@ -26,7 +26,7 @@ public class UserService {
                 case UserType.CUSTOMER -> {
                     return new Customer(
                             user.userId(), user.email(), user.address(),
-                            user.fullName(), user.paymentMethod(),user.isActive()
+                            user.fullName(), user.paymentMethod(), user.isActive()
                     );
                 }
                 case UserType.ADMIN -> {
@@ -42,6 +42,7 @@ public class UserService {
                     );
                 }
             }
+
         }
         return null;
     }

@@ -17,6 +17,14 @@ public class Order implements Serializable {
     private OrderStatus orderStatus;
     private final List<Item> items;
 
+    /**
+     * Reconstructs an order from the database.
+     * @param orderId
+     * @param customerId
+     * @param items products ordered
+     * @param dateOfPurchase the date of the purchase that created the order
+     * @param orderStatus
+     */
     public Order(UUID orderId, UUID customerId, List<Item> items, LocalDateTime dateOfPurchase, OrderStatus orderStatus) {
         if (customerId == null) throw new IllegalArgumentException("customerId required");
         if (items == null || items.isEmpty()) throw new IllegalArgumentException("items required");
@@ -26,6 +34,23 @@ public class Order implements Serializable {
         this.items = List.copyOf(items);
         this.dateOfPurchase = dateOfPurchase;
         this.orderStatus = orderStatus;
+    }
+
+    /**
+     * Creates a new order upon purchase.
+     * @param customerId
+     * @param items products ordered
+     */
+    public Order(UUID customerId, List<CartItem> items) {
+        this.orderId = UUID.randomUUID();
+        this.customerId = customerId;
+        this.items = new ArrayList<>();
+        for (CartItem cartItem : items) {
+            this.items.add(new Item(this.orderId, cartItem.getSku(),
+                    cartItem.getProductName(), cartItem.getPrice(),  cartItem.getQuantity()));
+        }
+        this.dateOfPurchase = LocalDateTime.now();
+        this.orderStatus = OrderStatus.PAID;
     }
 
     public UUID getOrderId() { return orderId; }

@@ -190,11 +190,10 @@ public record ProductDAO(
     /**
      * Update product stock
      */
-    public static Result updateStock(String sku, int newQuantity) throws SQLException {
+    public static Result updateStock(String sku, int newQuantity, Connection conn) throws SQLException {
         String sql = "UPDATE T_Product SET quantity = ? WHERE sku = ?";
 
-        try (Connection conn = DBManager.getConnection();
-             PreparedStatement stmt = conn.prepareStatement(sql)) {
+        try (PreparedStatement stmt = conn.prepareStatement(sql)) {
 
             stmt.setInt(1, newQuantity);
             stmt.setString(2, sku);

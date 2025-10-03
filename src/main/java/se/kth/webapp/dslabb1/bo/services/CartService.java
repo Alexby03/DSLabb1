@@ -3,8 +3,12 @@ package se.kth.webapp.dslabb1.bo.services;
 import se.kth.webapp.dslabb1.bo.models.*;
 import se.kth.webapp.dslabb1.bo.models.enums.Result;
 import se.kth.webapp.dslabb1.bo.models.enums.UserType;
+import se.kth.webapp.dslabb1.db.DBManager;
 import se.kth.webapp.dslabb1.db.data.CartDAO;
 import se.kth.webapp.dslabb1.db.data.ProductDAO;
+
+import java.sql.Connection;
+import java.sql.SQLException;
 import java.util.*;
 
 public class CartService {
@@ -80,9 +84,9 @@ public class CartService {
             return Result.FAILED;
         }
 
-        try {
-            return CartDAO.clearCart(userId);
-        } catch (Exception e) {
+        try (Connection conn = DBManager.getConnection()){
+            return CartDAO.clearCart(userId, conn);
+        } catch (SQLException e) {
             System.err.println("Error clearing cart: " + e.getMessage());
             return Result.FAILED;
         }
@@ -127,6 +131,12 @@ public class CartService {
         }
     }
 
+    /**
+     * Counts how many items are in a customer's cart.
+     * @param userId the customer
+     * @param userType the userType for customer
+     * @return amount of items in cart currently
+     */
     public static int getCartItemCount(UUID userId, UserType userType) {
         Cart cart = getUserCart(userId, userType);
         if (cart == null) {
@@ -145,6 +155,19 @@ public class CartService {
             System.err.println("Error counting cart items: " + e.getMessage());
             return 0;
         }
+    }
+
+    /**
+     * Looks for a cartItem to return
+     * @param userId id of cart owner
+     * @param sku id of product
+     * @return the cartItem, else null if such item does not exist in cart
+     */
+    public static CartItem getCartItem(UUID userId, String sku) {
+        if (userId == null || sku == null || sku.isBlank()) {
+            return null;
+        }
+        return CartDAO.findCartItemBySKU(userId, sku);
     }
 
     public static List<CartItem> getAllItems(UUID userId, UserType userType){

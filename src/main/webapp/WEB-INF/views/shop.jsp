@@ -47,7 +47,9 @@
         </a>
     </div>
 </header>
-
+<div class="error">
+    ${empty requestScope.errorMessage ? '' : requestScope.errorMessage}
+</div>
 <section class="toolbar">
     <form method="get" action="${pageContext.request.contextPath}/shop" style="display:flex; gap:12px; align-items:center;">
         <input type="text" name="searchText" placeholder="Sök produkter" value="${searchText}"/>
@@ -68,7 +70,6 @@
             <div class="price">${p.price} kr</div>
             <div class="desc">${p.description}</div>
 
-            <!-- ADD TO CART FORM (Point 4) -->
             <c:choose>
                 <c:when test="${p.quantity > 0 && !p.retired}">
                     <form method="post" action="${pageContext.request.contextPath}/shop" class="add-to-cart-form">

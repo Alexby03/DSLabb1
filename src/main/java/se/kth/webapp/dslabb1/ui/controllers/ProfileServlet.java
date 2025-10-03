@@ -29,15 +29,6 @@ public class ProfileServlet extends HttpServlet {
             return;
         }
 
-        // DEBUG: Print customer data to console
-        System.out.println("=== DEBUG CUSTOMER DATA ===");
-        System.out.println("Email: " + customer.getEmail());
-        System.out.println("FullName: " + customer.getFullName());
-        System.out.println("Address: " + customer.getAddress());
-        System.out.println("========================");
-
-
-        // Forward to profile edit page
         RequestDispatcher rd = request.getRequestDispatcher("/WEB-INF/views/profile.jsp");
         rd.forward(request, response);
     }
@@ -54,24 +45,22 @@ public class ProfileServlet extends HttpServlet {
             return;
         }
 
-        // Get form parameters
         String newEmail = request.getParameter("email");
         String newFullName = request.getParameter("fullName");
         String newAddress = request.getParameter("address");
         String newPaymentMethod = request.getParameter("paymentMethod");
 
-        // Update customer using your updateCustomer method
         Result result = UserService.updateCustomer(
                 newEmail,
                 newFullName,
                 newAddress,
-                null,           // null = keep existing password (don't update password in profile)
-                customer,       // existing customer from session
+                null,
+                customer,
                 newPaymentMethod
         );
 
         if (result == Result.SUCCESS) {
-            // Update session with new customer data
+
             Customer updatedCustomer = new Customer(
                     customer.getId(),
                     newEmail,
@@ -81,14 +70,11 @@ public class ProfileServlet extends HttpServlet {
                     customer.isActive()
             );
             session.setAttribute("CUSTOMER", updatedCustomer);
-            request.setAttribute("successMessage", "Profil uppdaterad framgångsrikt!");
+            request.setAttribute("successMessage", "Din profil har uppdaterats");
         } else {
             request.setAttribute("errorMessage", "Kunde inte uppdatera profil. Försök igen.");
         }
 
-
-
-        // Forward back to profile page with message
         RequestDispatcher rd = request.getRequestDispatcher("/WEB-INF/views/profile.jsp");
         rd.forward(request, response);
     }

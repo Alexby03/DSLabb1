@@ -13,7 +13,7 @@
     <title>Redigera Profil</title>
     <style>
         body { font-family: system-ui, sans-serif; margin: 2rem; }
-        .card { max-width: 420px; padding: 1.25rem; border: 1px solid #ddd; border-radius: 8px; }
+        .card { max-width: 500px; padding: 1.25rem; border: 1px solid #ddd; border-radius: 8px; }
         .error { color: rgba(193, 114, 133, 0.93); margin-top: 0.5rem; }
         .success { color: #649b64; margin-bottom: 1rem; }
         .nav-links { margin-bottom: 1rem; }
@@ -24,11 +24,6 @@
         button { margin-top: 1rem; padding: 0.5rem 1rem; }
     </style>
 </head>
-<header>
-    <div class="nav">
-        <a href="${pageContext.request.contextPath}/shop">Shop</a>
-    </div>
-</header>
 <body>
 <div class="card">
     <div class="nav-links">
@@ -57,6 +52,11 @@
 
         <label for="address">Adress</label>
         <input type="text" id="address" name="address" value="${sessionScope.CUSTOMER.address}"/>
+
+        <label for="paymentMethod">Betalningsmetod</label>
+        <input type="text" id="paymentMethod" name="paymentMethod"
+               value="${sessionScope.CUSTOMER.paymentMethod}"/>
+
 
         <button type="submit">Uppdatera Profil</button>
     </form>

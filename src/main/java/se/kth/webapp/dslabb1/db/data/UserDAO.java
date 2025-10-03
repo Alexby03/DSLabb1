@@ -216,7 +216,7 @@ public record UserDAO(
      */
     public static UserDAO fromDomainModel(IUser user, String userPassword) {
         String address = (user instanceof Customer customer) ? customer.getAddress() : null;
-        String paymentMethod = ""; // Can be expanded later
+        String paymentMethod = (user instanceof Customer customer) ? customer.getPaymentMethod() : null;
 
         return new UserDAO(
                 user.getId(),

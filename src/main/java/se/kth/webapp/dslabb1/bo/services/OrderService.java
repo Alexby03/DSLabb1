@@ -19,11 +19,11 @@ import java.util.*;
 
 public class OrderService {
 
-
-    public static Result createOrderFromCart(UUID userId, Cart cart, Order order) {
+    public static Result createOrderFromCart(UUID userId, Cart cart) {
         try (Connection conn = DBManager.getConnection()) {
             conn.setAutoCommit(false);
             try {
+                Order order = new Order(userId, cart.getItems());
                 Result orderResult = OrderDAO.createOrder(conn, order);
 
                 for (CartItem cartItem : cart.getItems()) {
@@ -37,12 +37,13 @@ public class OrderService {
                     }
 
                     String productSKU =  cartItem.getSku();
-                    ProductDAO.updateStock(productSKU,
-                            ProductDAO.findBySku(productSKU).quantity()-cartItem.getQuantity());
+                    int currenStockDiff = ProductDAO.findBySku(productSKU).quantity()-cartItem.getQuantity();
+                    if(currenStockDiff < 0) return Result.FAILED;
+                    ProductDAO.updateStock(productSKU, currenStockDiff, conn);
 
                 }
 
-                CartDAO.clearCart(userId);
+                CartDAO.clearCart(userId, conn);
 
                 conn.commit();
                 return Result.SUCCESS;
@@ -94,7 +95,7 @@ public class OrderService {
                     ProductDAO product = ProductDAO.findBySku(itemDAO.sku());
                     if (product != null) {
                         int newStock = product.quantity() + itemDAO.quantity();
-                        Result stockUpdate = ProductDAO.updateStock(itemDAO.sku(), newStock);
+                        Result stockUpdate = ProductDAO.updateStock(itemDAO.sku(), newStock, conn);
                         if (stockUpdate != Result.SUCCESS) {
                             conn.rollback();
                             return Result.FAILED;
@@ -178,10 +179,8 @@ public class OrderService {
         }
     }
 
-    public static List<Order> getCustomerOrders(UUID customerId, UUID requestingUserId, UserType userType) {
-        if (UserType.CUSTOMER.equals(userType) && !customerId.equals(requestingUserId)) {
-            return new ArrayList<>();
-        }
+    public static List<Order> getCustomerOrders(UUID customerId, UserType userType) {
+
         if (!UserType.CUSTOMER.equals(userType) && !UserType.ADMIN.equals(userType)) {
             return new ArrayList<>();
         }
