@@ -1,11 +1,5 @@
-<%--
-  Created by IntelliJ IDEA.
-  User: BOTALEX
-  Date: 2025-10-02
-  Time: 16:08
-  To change this template use File | Settings | File Templates.
---%>
-<%@ taglib prefix="c" uri="http://java.sun.com/jsp/jstl/core" %> <!-- JSTL 1.2/2.0 core -->
+<%@ taglib prefix="c" uri="http://java.sun.com/jsp/jstl/core" %>
+<!-- JSTL 1.2/2.0 core -->
 <%@ page contentType="text/html; charset=UTF-8" pageEncoding="UTF-8" %>
 <!DOCTYPE html>
 <html lang="sv">
@@ -51,7 +45,8 @@
     ${empty requestScope.errorMessage ? '' : requestScope.errorMessage}
 </div>
 <section class="toolbar">
-    <form method="get" action="${pageContext.request.contextPath}/shop" style="display:flex; gap:12px; align-items:center;">
+    <form method="get" action="${pageContext.request.contextPath}/shop"
+          style="display:flex; gap:12px; align-items:center;">
         <input type="text" name="searchText" placeholder="Sök produkter" value="${searchText}"/>
         <select name="category">
             <option value="">Alla kategorier</option>

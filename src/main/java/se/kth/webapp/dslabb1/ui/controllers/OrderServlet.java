@@ -63,6 +63,7 @@ public class OrderServlet extends HttpServlet {
         request.setAttribute("orderCount", orders.size());
         request.setAttribute("customerName", customer.getFullName());
 
+
         request.getRequestDispatcher("/WEB-INF/views/orders.jsp").forward(request, response);
     }
 
@@ -91,7 +92,6 @@ public class OrderServlet extends HttpServlet {
             request.setAttribute("orderItems", order.getItems());
             request.setAttribute("orderTotal", order.getTotalAmount());
             request.setAttribute("canCancel", order.getOrderStatus() == OrderStatus.PAID);
-            //request.setAttribute("dateOfPurchase", order.getDateOfPurchase());
 
             // Customer info
             request.setAttribute("email", customer.getEmail());
@@ -155,5 +155,4 @@ public class OrderServlet extends HttpServlet {
         }
     }
 }
-
 

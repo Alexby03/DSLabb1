@@ -11,25 +11,37 @@ import java.util.UUID;
  * Item is created for an Order. It has an itemId (UUID) generated on order creation.
  * It contains a snapshot of product data (sku, name, unitPrice, quantity).
  */
-public class Cart implements Serializable {
-    private final UUID customerId;
-    private List<CartItem> items;
-
+public record Cart(UUID customerId, List<CartItem> items) implements Serializable {
+    /**
+     * Creates or reconstructs a cart from the database.
+     *
+     * @param customerId ID of the owner of the cart.
+     * @param items      the items within the cart.
+     */
     public Cart(UUID customerId, List<CartItem> items) {
         if (customerId == null) throw new IllegalArgumentException("customerId required");
         this.customerId = customerId;
         this.items = new ArrayList<>(items);
     }
 
-    public UUID getCustomerId() { return customerId; }
+    @Override
+    public List<CartItem> items() {
+        return List.copyOf(items);
+    }
 
-    public List<CartItem> getItems(){ return List.copyOf(items); }
-
-    public int nrProducts(){
+    /**
+     *
+     * @return the number of items within the cart currently.
+     */
+    public int nrItems() {
         return items.size();
     }
 
-    public double totalCost(){
+    /**
+     *
+     * @return the total cost for all products in all items.
+     */
+    public double totalCost() {
         double totalCost = 0;
         for (CartItem item : items) {
             totalCost += item.getPrice() * item.getQuantity();
@@ -37,17 +49,22 @@ public class Cart implements Serializable {
         return totalCost;
     }
 
-    public Result emptyCart(){
+    /**
+     * Empties the cart of all items.
+     *
+     * @return success if cleared the cart.
+     */
+    public Result emptyCart() {
         items.clear();
         return Result.SUCCESS;
     }
 
-//    public Result addItem(CartItem item){
-//        items.add(item);
-//        return Result.SUCCESS;
-//    }
-
-    // Check if item with same SKU exists in Cart, if so, increase quantity, if not add as new item
+    /**
+     * Adds an item to the cart.
+     *
+     * @param newItem
+     * @return whether adding was successful.
+     */
     public Result addItem(CartItem newItem) {
         if (newItem == null) {
             return Result.FAILED;

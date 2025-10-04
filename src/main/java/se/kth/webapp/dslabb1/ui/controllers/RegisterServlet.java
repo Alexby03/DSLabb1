@@ -1,17 +1,12 @@
 package se.kth.webapp.dslabb1.ui.controllers;
 
+import jakarta.servlet.RequestDispatcher;
 import jakarta.servlet.ServletException;
 import jakarta.servlet.annotation.WebServlet;
-import jakarta.servlet.RequestDispatcher;
 import jakarta.servlet.http.HttpServlet;
 import jakarta.servlet.http.HttpServletRequest;
 import jakarta.servlet.http.HttpServletResponse;
-import jakarta.servlet.http.HttpSession;
-
-import se.kth.webapp.dslabb1.bo.models.Customer;
-import se.kth.webapp.dslabb1.bo.models.IUser;
 import se.kth.webapp.dslabb1.bo.models.enums.Result;
-import se.kth.webapp.dslabb1.bo.models.enums.UserType;
 import se.kth.webapp.dslabb1.bo.services.UserService;
 
 import java.io.IOException;

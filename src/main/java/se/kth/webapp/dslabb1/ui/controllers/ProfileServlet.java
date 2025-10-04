@@ -1,13 +1,12 @@
 package se.kth.webapp.dslabb1.ui.controllers;
 
+import jakarta.servlet.RequestDispatcher;
 import jakarta.servlet.ServletException;
 import jakarta.servlet.annotation.WebServlet;
-import jakarta.servlet.RequestDispatcher;
 import jakarta.servlet.http.HttpServlet;
 import jakarta.servlet.http.HttpServletRequest;
 import jakarta.servlet.http.HttpServletResponse;
 import jakarta.servlet.http.HttpSession;
-
 import se.kth.webapp.dslabb1.bo.models.Customer;
 import se.kth.webapp.dslabb1.bo.models.enums.Result;
 import se.kth.webapp.dslabb1.bo.services.UserService;
@@ -25,7 +24,7 @@ public class ProfileServlet extends HttpServlet {
         Customer customer = (Customer) session.getAttribute("CUSTOMER");
 
         if (customer == null) {
-            response.sendRedirect(request.getContextPath() + "/login");
+            response.sendRedirect(request.getContextPath() + "/logout");
             return;
         }
 
@@ -41,7 +40,7 @@ public class ProfileServlet extends HttpServlet {
         Customer customer = (Customer) session.getAttribute("CUSTOMER");
 
         if (customer == null) {
-            response.sendRedirect(request.getContextPath() + "/login");
+            response.sendRedirect(request.getContextPath() + "/logout");
             return;
         }
 

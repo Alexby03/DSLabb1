@@ -19,13 +19,13 @@ public class CurrentOrderServlet extends HttpServlet {
 
         HttpSession session = request.getSession(false);
         if (session == null) {
-            response.sendRedirect(request.getContextPath() + "/login");
+            response.sendRedirect(request.getContextPath() + "/logout");
             return;
         }
 
         Customer customer = (Customer) session.getAttribute("CUSTOMER");
         if (customer == null) {
-            response.sendRedirect(request.getContextPath() + "/login");
+            response.sendRedirect(request.getContextPath() + "/logout");
             return;
         }
 

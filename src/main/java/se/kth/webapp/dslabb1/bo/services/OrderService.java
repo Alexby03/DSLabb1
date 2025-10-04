@@ -3,7 +3,7 @@ package se.kth.webapp.dslabb1.bo.services;
 import se.kth.webapp.dslabb1.bo.models.Cart;
 import se.kth.webapp.dslabb1.bo.models.CartItem;
 import se.kth.webapp.dslabb1.bo.models.Item;
-import  se.kth.webapp.dslabb1.bo.models.Order;
+import se.kth.webapp.dslabb1.bo.models.Order;
 import se.kth.webapp.dslabb1.bo.models.enums.OrderStatus;
 import se.kth.webapp.dslabb1.bo.models.enums.Result;
 import se.kth.webapp.dslabb1.bo.models.enums.UserType;
@@ -15,77 +15,124 @@ import se.kth.webapp.dslabb1.db.data.ProductDAO;
 
 import java.sql.Connection;
 import java.sql.SQLException;
-import java.util.*;
+import java.util.ArrayList;
+import java.util.List;
+import java.util.UUID;
 
+/**
+ * Service class providing methods for handling orders to the presentation layer.
+ */
 public class OrderService {
 
+    /**
+     * Attempts to generate a new order to the database by using a cart.
+     *
+     * @param userId the id of the customer who made the order.
+     * @param cart   the customer's cart instance.
+     * @return whether generating the order was successful or not.
+     */
     public static Result createOrderFromCart(UUID userId, Cart cart) {
         try (Connection conn = DBManager.getConnection()) {
+
             conn.setAutoCommit(false);
+
             try {
-                Order order = new Order(userId, cart.getItems());
+
+                Order order = new Order(userId, cart.items());
                 Result orderResult = OrderDAO.createOrder(conn, order);
 
-                for (CartItem cartItem : cart.getItems()) {
+                if (orderResult == Result.FAILED) {
+
+                    conn.rollback();
+                    return Result.FAILED;
+                }
+
+                for (CartItem cartItem : cart.items()) {
 
                     Item item = new Item(order.getOrderId(), cartItem.getSku(), cartItem.getProductName(),
-                            cartItem.getPrice(),  cartItem.getQuantity());
+                            cartItem.getPrice(), cartItem.getQuantity());
                     Result itemResult = ItemDAO.createItem(conn, item);
                     if (itemResult != Result.SUCCESS) {
                         conn.rollback();
                         return Result.FAILED;
                     }
 
-                    String productSKU =  cartItem.getSku();
-                    int currenStockDiff = ProductDAO.findBySku(productSKU).quantity()-cartItem.getQuantity();
-                    if(currenStockDiff < 0) return Result.FAILED;
+                    String productSKU = cartItem.getSku();
+                    int currenStockDiff = ProductDAO.findBySku(productSKU).quantity() - cartItem.getQuantity();
+                    if (currenStockDiff < 0) return Result.FAILED;
                     ProductDAO.updateStock(productSKU, currenStockDiff, conn);
 
                 }
 
                 CartDAO.clearCart(userId, conn);
-
                 conn.commit();
                 return Result.SUCCESS;
+
             } catch (SQLException e) {
+
                 conn.rollback();
                 return Result.FAILED;
+
             }
         } catch (SQLException e) {
-            System.err.println("Error creating Order: "+e.getMessage());
+
+            System.err.println("Error creating Order: " + e.getMessage());
             return Result.FAILED;
+
         }
 
     }
 
+    /**
+     * Cancels an order.
+     *
+     * @param userId   the id of the customer owning the order.
+     * @param orderId  of the order.
+     * @param userType if the user is actually a customer.
+     * @return whether updating cancelling the order was successful or not.
+     */
     public static Result cancelOrder(UUID userId, UUID orderId, UserType userType) {
         if (userId == null || orderId == null) {
+
             return Result.FAILED;
+
         }
 
         try (Connection conn = DBManager.getConnection()) {
+
             conn.setAutoCommit(false);
+
             try {
-                // Get current order to check ownership and status
+
                 OrderDAO currentOrder = OrderDAO.findById(orderId);
                 if (currentOrder == null) {
+
                     conn.rollback();
                     return Result.FAILED;
+
                 }
 
                 // Auth check if customer owns order or is admin
+
                 if (UserType.CUSTOMER.equals(userType) && !currentOrder.userId().equals(userId)) {
+
                     conn.rollback();
                     return Result.FAILED;
+
                 }
+
                 if (!UserType.ADMIN.equals(userType) && !UserType.CUSTOMER.equals(userType)) {
+
                     conn.rollback();
                     return Result.PRIVILEGE;
+
                 }
 
                 if (currentOrder.orderStatus() != OrderStatus.PAID) {
+
                     conn.rollback();
                     return Result.FAILED;
+
                 }
 
                 OrderDAO.updateOrderStatus(orderId, OrderStatus.CANCELED);
@@ -107,23 +154,35 @@ public class OrderService {
                 return Result.SUCCESS;
 
             } catch (SQLException e) {
+
                 conn.rollback();
                 return Result.FAILED;
+
             }
         } catch (SQLException e) {
+
             System.err.println("Error canceling order: " + e.getMessage());
             return Result.FAILED;
+
         }
     }
 
-    public static Result updateOrderStatus(UUID orderId, OrderStatus newStatus, UserType  userType) {
-        if(!UserType.ADMIN.equals(userType) && !UserType.WAREHOUSEWORKER.equals(userType)) return Result.PRIVILEGE;
+    /**
+     * Updates the status of the order.
+     *
+     * @param orderId   of the order.
+     * @param newStatus of the order.
+     * @param userType  if the user is actually a customer.
+     * @return whether updating the status was successful or not.
+     */
+    public static Result updateOrderStatus(UUID orderId, OrderStatus newStatus, UserType userType) {
+        if (!UserType.ADMIN.equals(userType) && !UserType.WAREHOUSEWORKER.equals(userType)) return Result.PRIVILEGE;
 
-        if(orderId == null || newStatus == null) {
+        if (orderId == null || newStatus == null) {
             return Result.FAILED;
         }
 
-        try(Connection conn = DBManager.getConnection()) {
+        try (Connection conn = DBManager.getConnection()) {
             conn.setAutoCommit(false);
             try {
                 OrderDAO currentOrder = OrderDAO.findById(orderId);
@@ -131,7 +190,7 @@ public class OrderService {
                     conn.rollback();
                     return Result.FAILED;
                 }
-                if(currentOrder.orderStatus() == OrderStatus.CANCELED){
+                if (currentOrder.orderStatus() == OrderStatus.CANCELED) {
                     conn.rollback();
                     return Result.FAILED;
                 }
@@ -142,16 +201,24 @@ public class OrderService {
                 return Result.SUCCESS;
             } catch (Exception e) {
                 conn.rollback();
-                return  Result.FAILED;
+                return Result.FAILED;
             }
         } catch (SQLException e) {
-           System.err.println("Error Updating order status: "+e.getMessage());
-           return Result.FAILED;
+            System.err.println("Error Updating order status: " + e.getMessage());
+            return Result.FAILED;
         }
     }
 
-    public static Order getOrderById(UUID orderId, UUID requestingUserId, UserType userType) {
-        if (orderId == null || requestingUserId == null) {
+    /**
+     * Attempts to retrieve an order through the orderId.
+     *
+     * @param orderId  the id of the order.
+     * @param userId   the id of the customer owning the order.
+     * @param userType if the user is actually a customer or not.
+     * @return the order if successful, otherwise null.
+     */
+    public static Order getOrderById(UUID orderId, UUID userId, UserType userType) {
+        if (orderId == null || userId == null) {
             return null;
         }
 
@@ -161,7 +228,8 @@ public class OrderService {
                 return null;
             }
 
-            if (UserType.CUSTOMER.equals(userType) && !orderDao.userId().equals(requestingUserId)) {
+            //ownership check
+            if (UserType.CUSTOMER.equals(userType) && !orderDao.userId().equals(userId)) {
                 return null;
             }
             if (!UserType.CUSTOMER.equals(userType) && !UserType.ADMIN.equals(userType) && !UserType.WAREHOUSEWORKER.equals(userType)) {
@@ -179,6 +247,13 @@ public class OrderService {
         }
     }
 
+    /**
+     * Attempts to retrieve all the orders of a particular customer.
+     *
+     * @param customerId the id of the customer.
+     * @param userType   if the user is actually a customer or not.
+     * @return the list of orders if successful, otherwise empty list.
+     */
     public static List<Order> getCustomerOrders(UUID customerId, UserType userType) {
 
         if (!UserType.CUSTOMER.equals(userType) && !UserType.ADMIN.equals(userType)) {
@@ -206,7 +281,13 @@ public class OrderService {
         }
     }
 
-    public static double calculateOrderTotal(UUID orderId, UserType userType) {
+    /**
+     * Calculates the total cost of the order.
+     *
+     * @param orderId id of the order.
+     * @return the total cost of the order.
+     */
+    public static double calculateOrderTotal(UUID orderId) {
         if (orderId == null) {
             return 0.0;
         }
@@ -216,7 +297,7 @@ public class OrderService {
             double total = 0.0;
 
             for (Item item : items) {
-                total += item.getUnitPrice() * item.getQuantity();
+                total += item.unitPrice() * item.quantity();
             }
             return total;
 
@@ -226,7 +307,13 @@ public class OrderService {
         }
     }
 
-    public static int getOrderItemCount(UUID orderId, UserType userType) {
+    /**
+     * Retrieves the total amount of products within all items in the order.
+     *
+     * @param orderId id of the order.
+     * @return the total count of products within the order.
+     */
+    public static int getOrderItemCount(UUID orderId) {
         if (orderId == null) {
             return 0;
         }
@@ -236,7 +323,7 @@ public class OrderService {
             int count = 0;
 
             for (Item item : items) {
-                count += item.getQuantity();
+                count += item.quantity();
             }
 
             return count;

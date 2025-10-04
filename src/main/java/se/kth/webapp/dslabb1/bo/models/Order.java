@@ -8,20 +8,21 @@ import java.time.LocalDateTime;
 import java.util.*;
 
 /**
- * Order contains generated orderId and a list of Items (each Item has its own itemId).
+ * Class representing the Order class and object.
  */
 public class Order implements Serializable {
     private final UUID orderId;
     private final UUID customerId;
     private final LocalDateTime dateOfPurchase;
-    private OrderStatus orderStatus;
     private final List<Item> items;
+    private OrderStatus orderStatus;
 
     /**
      * Reconstructs an order from the database.
+     *
      * @param orderId
      * @param customerId
-     * @param items products ordered
+     * @param items          products ordered
      * @param dateOfPurchase the date of the purchase that created the order
      * @param orderStatus
      */
@@ -38,8 +39,9 @@ public class Order implements Serializable {
 
     /**
      * Creates a new order upon purchase.
+     *
      * @param customerId
-     * @param items products ordered
+     * @param items      products ordered
      */
     public Order(UUID customerId, List<CartItem> items) {
         this.orderId = UUID.randomUUID();
@@ -47,25 +49,48 @@ public class Order implements Serializable {
         this.items = new ArrayList<>();
         for (CartItem cartItem : items) {
             this.items.add(new Item(this.orderId, cartItem.getSku(),
-                    cartItem.getProductName(), cartItem.getPrice(),  cartItem.getQuantity()));
+                    cartItem.getProductName(), cartItem.getPrice(), cartItem.getQuantity()));
         }
         this.dateOfPurchase = LocalDateTime.now();
         this.orderStatus = OrderStatus.PAID;
     }
 
-    public UUID getOrderId() { return orderId; }
-    public UUID getCustomerId() { return customerId; }
-    public LocalDateTime getDateOfPurchase() { return dateOfPurchase; }
-    public OrderStatus getOrderStatus() { return orderStatus; }
-    private void setOrderStatus(OrderStatus orderStatus) { this.orderStatus = orderStatus; }
-    public List<Item> getItems() { return Collections.unmodifiableList(items); }
+    public UUID getOrderId() {
+        return orderId;
+    }
 
+    public UUID getCustomerId() {
+        return customerId;
+    }
+
+    public LocalDateTime getDateOfPurchase() {
+        return dateOfPurchase;
+    }
+
+    public OrderStatus getOrderStatus() {
+        return orderStatus;
+    }
+
+    public List<Item> getItems() {
+        return Collections.unmodifiableList(items);
+    }
+
+    /**
+     * Fetches the total amount of all products (items) ordered.
+     *
+     * @return the total amount.
+     */
     public double getTotalAmount() {
         return items.stream()
                 .mapToDouble(Item::subtotal)
                 .sum();
     }
 
+    /**
+     * Advances the status of the order.
+     *
+     * @return if advance was successful.
+     */
     public Result advanceStatus() {
         if (orderStatus == OrderStatus.CANCELED || orderStatus == OrderStatus.DELIVERED) return Result.FAILED;
         switch (orderStatus) {
@@ -77,10 +102,17 @@ public class Order implements Serializable {
                 orderStatus = OrderStatus.DELIVERED;
                 return Result.SUCCESS;
             }
-            default -> {return Result.FAILED;}
+            default -> {
+                return Result.FAILED;
+            }
         }
     }
 
+    /**
+     * Marks this order instance as canceled.
+     *
+     * @return if cancellation was successful.
+     */
     public Result cancelOrder() {
         if (orderStatus == OrderStatus.SHIPPED || orderStatus == OrderStatus.DELIVERED) return Result.FAILED;
         orderStatus = OrderStatus.CANCELED;

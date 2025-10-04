@@ -1,16 +1,16 @@
 package se.kth.webapp.dslabb1.ui.controllers;
 
+import jakarta.servlet.RequestDispatcher;
 import jakarta.servlet.ServletException;
 import jakarta.servlet.annotation.WebServlet;
-import jakarta.servlet.RequestDispatcher;
 import jakarta.servlet.http.HttpServlet;
 import jakarta.servlet.http.HttpServletRequest;
 import jakarta.servlet.http.HttpServletResponse;
 import jakarta.servlet.http.HttpSession;
-
-import se.kth.webapp.dslabb1.bo.models.*;
+import se.kth.webapp.dslabb1.bo.models.Cart;
+import se.kth.webapp.dslabb1.bo.models.CartItem;
+import se.kth.webapp.dslabb1.bo.models.Customer;
 import se.kth.webapp.dslabb1.bo.models.enums.Result;
-import se.kth.webapp.dslabb1.bo.models.enums.UserType;
 import se.kth.webapp.dslabb1.bo.services.CartService;
 
 import java.io.IOException;
@@ -32,7 +32,7 @@ public class CartServlet extends HttpServlet {
         }
 
         Cart userCart = CartService.getUserCart(customer.getId(), customer.getUserType());
-        List<CartItem> cartItems = (userCart != null) ? userCart.getItems() : List.of();
+        List<CartItem> cartItems = (userCart != null) ? userCart.items() : List.of();
         double cartTotal = CartService.getCartTotal(customer.getId(), customer.getUserType());
         int cartItemCount = CartService.getCartItemCount(customer.getId(), customer.getUserType());
 
@@ -76,7 +76,7 @@ public class CartServlet extends HttpServlet {
                         if (result == Result.SUCCESS) {
                             successMessage = "Cart has updated!";
                         } else {
-                            errorMessage = "Kunde inte uppdatera antal.";
+                            errorMessage = "Kunde inte uppdatera antalet.";
                         }
                     }
                 }
@@ -131,7 +131,7 @@ public class CartServlet extends HttpServlet {
 
         // Reload cart data after operation
         Cart userCart = CartService.getUserCart(customer.getId(), customer.getUserType());
-        List<CartItem> cartItems = (userCart != null) ? userCart.getItems() : List.of();
+        List<CartItem> cartItems = (userCart != null) ? userCart.items() : List.of();
         double cartTotal = CartService.getCartTotal(customer.getId(), customer.getUserType());
         int cartItemCount = CartService.getCartItemCount(customer.getId(), customer.getUserType());
 

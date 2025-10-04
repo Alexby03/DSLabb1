@@ -21,7 +21,6 @@
         .success { color: #155724; background: #d4edda; padding: 8px; border-radius: 4px; margin-bottom: 1rem; }
         .error { color: #721c24; background: #f8d7da; padding: 8px; border-radius: 4px; margin-bottom: 1rem; }
         .cart-summary { border: 2px solid #007bff; border-radius: 8px; padding: 16px; margin-top: 20px; }
-        .empty-cart { text-align: center; padding: 3rem; color: #6c757d; }
     </style>
 </head>
 <body>
@@ -33,7 +32,6 @@
 
 <h1>🛒 Kundvagn</h1>
 
-<!-- Message control -->
 <c:if test="${not empty successMessage}">
     <div class="success">${successMessage}</div>
 </c:if>
@@ -42,7 +40,6 @@
     <div class="error">${errorMessage}</div>
 </c:if>
 
-<!-- Empty Cart -->
 <c:if test="${isEmpty}">
     <div class="empty-cart">
         <h2>Din kundvagn är tom</h2>
@@ -61,7 +58,6 @@
             <p>SKU: ${item.sku}</p>
             <p class="price">${item.price} kr/st</p>
 
-            <!-- Quantity -->
             <div class="quantity-controls">
                 <form method="post" action="${pageContext.request.contextPath}/cart" style="display: inline;">
                     <input type="hidden" name="action" value="updateQuantity"/>
@@ -93,19 +89,20 @@
         </div>
     </c:forEach>
 
-    <!-- Cart Summary -->
     <div class="cart-summary">
         <h3>Kundvagn total:</h3>
         <p><strong>Antal varor: ${cartItemCount} st</strong></p>
         <p><strong>Totalt pris: ${cartTotal} kr</strong></p>
 
         <div style="margin-top: 16px;">
-            <form method="post" action="${pageContext.request.contextPath}/cart" style="display: inline; margin-right: 8px;">
+            <form method="post" action="${pageContext.request.contextPath}/cart"
+                  style="display: inline; margin-right: 8px;">
                 <input type="hidden" name="action" value="checkout"/>
                 <button type="submit" class="btn-success">Gå till kassan</button>
             </form>
 
-            <form method="post" action="${pageContext.request.contextPath}/cart" style="display: inline; margin-right: 8px;">
+            <form method="post" action="${pageContext.request.contextPath}/cart"
+                  style="display: inline; margin-right: 8px;">
                 <input type="hidden" name="action" value="clearCart"/>
                 <button type="submit" class="btn-danger"
                         onclick="return confirm('Töm hela kundvagnen?')">
@@ -119,6 +116,5 @@
         </div>
     </div>
 </c:if>
-
 </body>
 </html>

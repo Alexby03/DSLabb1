@@ -6,11 +6,15 @@ import se.kth.webapp.dslabb1.bo.models.enums.Result;
 import se.kth.webapp.dslabb1.db.DBManager;
 
 import java.math.BigDecimal;
-import java.sql.*;
-import java.util.*;
+import java.sql.Connection;
+import java.sql.PreparedStatement;
+import java.sql.ResultSet;
+import java.sql.SQLException;
+import java.util.ArrayList;
+import java.util.List;
 
 /**
- * DAO record for Product operations - matches T_Product table structure
+ * Data access object for an entity in table T_Product in DB schema.
  */
 public record ProductDAO(
         String sku,
@@ -23,7 +27,10 @@ public record ProductDAO(
 ) {
 
     /**
-     * Create a new product
+     * Generates a new product to the database.
+     *
+     * @param productDao instance of a product data access object.
+     * @return whether creating a product was successful or not.
      */
     public static Result createProduct(ProductDAO productDao) {
         String sql = "INSERT INTO T_Product (sku, productName, productDescription, category, quantity, price, isRetired) VALUES (?, ?, ?, ?, ?, ?, ?)";
@@ -48,7 +55,10 @@ public record ProductDAO(
     }
 
     /**
-     * Find product by SKU
+     * Finds a user in the database and returns it.
+     *
+     * @param sku the queried ID of the product.
+     * @return the product data access object if found, otherwise null.
      */
     public static ProductDAO findBySku(String sku) {
         String sql = "SELECT * FROM T_Product WHERE sku = ?";
@@ -80,7 +90,8 @@ public record ProductDAO(
 
     /**
      * Attempts to find a product by category and / or name.
-     * @param category enum, product category, enter null if all.
+     *
+     * @param category    enum, product category, enter null if all.
      * @param productName string, name of product, enter null if no specific name search.
      * @return list of products matching the query.
      */
@@ -126,9 +137,10 @@ public record ProductDAO(
         return products;
     }
 
-
     /**
-     * Get all products
+     * Attempts to find all products currently existing.
+     *
+     * @return list of product data access objects of found products.
      */
     public static List<ProductDAO> findAll() {
         List<ProductDAO> products = new ArrayList<>();
@@ -158,7 +170,9 @@ public record ProductDAO(
     }
 
     /**
-     * Get available products (not retired and in stock)
+     * Attempts to find all products currently not retired and in stock.
+     *
+     * @return list of product data access objects of found products.
      */
     public static List<ProductDAO> findAvailableProducts() {
         List<ProductDAO> products = new ArrayList<>();
@@ -188,7 +202,13 @@ public record ProductDAO(
     }
 
     /**
-     * Update product stock
+     * Updates a product's quantity within the database.
+     *
+     * @param sku         the unique ID of the product.
+     * @param newQuantity of the product.
+     * @param conn        the connection to the database.
+     * @return whether updating the product was successful or not.
+     * @throws SQLException if updating the product failed.
      */
     public static Result updateStock(String sku, int newQuantity, Connection conn) throws SQLException {
         String sql = "UPDATE T_Product SET quantity = ? WHERE sku = ?";
@@ -204,7 +224,11 @@ public record ProductDAO(
     }
 
     /**
-     * Update product stock
+     * Updates a product's price within the database.
+     *
+     * @param sku      the unique ID of the product.
+     * @param newPrice of the product.
+     * @return whether updating the product was successful or not.
      */
     public static Result changePrice(String sku, double newPrice) {
         String sql = "UPDATE T_Product SET price = ? WHERE sku = ?";
@@ -224,15 +248,9 @@ public record ProductDAO(
     }
 
     /**
-     * Convert ProductDAO to domain model Product
-     */
-    public Product toDomainModel() {
-        return new Product(this.sku, this.productName, this.productDescription,
-                this.category, this.quantity, this.price, this.isRetired);
-    }
-
-    /**
-     * Create ProductDAO from domain model Product
+     * Converts a product instance to a product data access object.
+     *
+     * @return the product data access object.
      */
     public static ProductDAO fromDomainModel(Product product) {
         return new ProductDAO(
@@ -244,5 +262,15 @@ public record ProductDAO(
                 product.getPrice(),
                 product.isRetired()
         );
+    }
+
+    /**
+     * Converts a product data access object to a product instance.
+     *
+     * @return the product instance.
+     */
+    public Product toDomainModel() {
+        return new Product(this.sku, this.productName, this.productDescription,
+                this.category, this.quantity, this.price, this.isRetired);
     }
 }

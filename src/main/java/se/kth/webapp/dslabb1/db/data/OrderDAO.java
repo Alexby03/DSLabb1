@@ -1,17 +1,25 @@
 package se.kth.webapp.dslabb1.db.data;
 
-import se.kth.webapp.dslabb1.bo.models.*;
+import se.kth.webapp.dslabb1.bo.models.Item;
+import se.kth.webapp.dslabb1.bo.models.Order;
 import se.kth.webapp.dslabb1.bo.models.enums.OrderStatus;
 import se.kth.webapp.dslabb1.bo.models.enums.Result;
 import se.kth.webapp.dslabb1.db.DBManager;
 
 import java.math.BigDecimal;
-import java.sql.*;
-import java.sql.Date;
+import java.sql.Connection;
+import java.sql.PreparedStatement;
+import java.sql.ResultSet;
+import java.sql.SQLException;
 import java.time.LocalDate;
 import java.time.LocalDateTime;
-import java.util.*;
+import java.util.ArrayList;
+import java.util.List;
+import java.util.UUID;
 
+/**
+ * Data access object for an entity in table T_Order in DB schema.
+ */
 public record OrderDAO(
         UUID orderId,
         UUID userId,
@@ -21,7 +29,12 @@ public record OrderDAO(
 ) {
 
     /**
-     * Create order, transaction and exceptions handled outside method
+     * Generates a new order to the database.
+     *
+     * @param conn  the connection to the database.
+     * @param order an order instance.
+     * @return whether generating the order was successful or not.
+     * @throws SQLException if creating the order failed on the database end.
      */
     public static Result createOrder(Connection conn, Order order) throws SQLException {
         String sql = "INSERT INTO T_Order (orderId, userId, totalAmount, dateOfPurchase, orderStatus) VALUES (?, ?, ?, ?, ?)";
@@ -35,9 +48,11 @@ public record OrderDAO(
         }
     }
 
-
     /**
-     * Find order by ID
+     * Finds an order in the database and returns it.
+     *
+     * @param orderId the id of the order.
+     * @return the order data access object if found, otherwise null.
      */
     public static OrderDAO findById(UUID orderId) {
         String sql = "SELECT * FROM T_Order WHERE orderId = ?";
@@ -66,7 +81,10 @@ public record OrderDAO(
     }
 
     /**
-     * Find orders by user ID
+     * Finds an order in the database and returns it.
+     *
+     * @param userId the id of the customer owning the order.
+     * @return the order data access object if found, otherwise null.
      */
     public static List<OrderDAO> findByUserId(UUID userId) {
         List<OrderDAO> orders = new ArrayList<>();
@@ -97,7 +115,9 @@ public record OrderDAO(
     }
 
     /**
-     * Get all orders
+     * Attempts to find all orders currently existing.
+     *
+     * @return list of order data access objects of found users.
      */
     public static List<OrderDAO> findAll() {
         List<OrderDAO> orders = new ArrayList<>();
@@ -125,7 +145,11 @@ public record OrderDAO(
     }
 
     /**
-     * Update order status
+     * Updates the status of the order.
+     *
+     * @param orderId   of the order.
+     * @param newStatus of the order.
+     * @return whether updating the status was successful or not.
      */
     public static Result updateOrderStatus(UUID orderId, OrderStatus newStatus) {
         String sql = "UPDATE T_Order SET orderStatus = ? WHERE orderId = ?";
@@ -145,19 +169,11 @@ public record OrderDAO(
     }
 
     /**
-     * Convert OrderDAO to domain model Order
-     * Note: Items must be loaded separately via ItemDAO
-     */
-    public Order toDomainModel() {
-        // Create empty items list - will be populated by service layer
-        List<Item> items = new ArrayList<>();
-        LocalDateTime dateTime = this.dateOfPurchase.atStartOfDay();
-
-        return new Order(this.orderId, this.userId, items, dateTime, this.orderStatus);
-    }
-
-    /**
-     * Create OrderDAO from domain model Order
+     *
+     * Converts an order instance to an order data access object.
+     *
+     * @param order the order instance.
+     * @return the order data access object.
      */
     public static OrderDAO fromDomainModel(Order order) {
         return new OrderDAO(
@@ -167,6 +183,18 @@ public record OrderDAO(
                 order.getDateOfPurchase().toLocalDate(),
                 order.getOrderStatus()
         );
+    }
+
+    /**
+     * Converts an order data access object to an order instance.
+     *
+     * @return the order instance.
+     */
+    public Order toDomainModel() {
+        List<Item> items = new ArrayList<>();
+        LocalDateTime dateTime = this.dateOfPurchase.atStartOfDay();
+
+        return new Order(this.orderId, this.userId, items, dateTime, this.orderStatus);
     }
 }
 

@@ -1,13 +1,12 @@
 package se.kth.webapp.dslabb1.ui.controllers;
 
+import jakarta.servlet.RequestDispatcher;
 import jakarta.servlet.ServletException;
 import jakarta.servlet.annotation.WebServlet;
-import jakarta.servlet.RequestDispatcher;
 import jakarta.servlet.http.HttpServlet;
 import jakarta.servlet.http.HttpServletRequest;
 import jakarta.servlet.http.HttpServletResponse;
 import jakarta.servlet.http.HttpSession;
-
 import se.kth.webapp.dslabb1.bo.models.IUser;
 import se.kth.webapp.dslabb1.bo.models.enums.UserType;
 import se.kth.webapp.dslabb1.bo.services.UserService;
@@ -39,12 +38,11 @@ public class LoginServlet extends HttpServlet {
                 session.setAttribute("CUSTOMER", user);
             } else if (user.getUserType() == UserType.ADMIN) {
                 session.setAttribute("ADMIN", user);
-            } else if(user.getUserType() == UserType.WAREHOUSEWORKER){
+            } else if (user.getUserType() == UserType.WAREHOUSEWORKER) {
                 session.setAttribute("WAREHOUSEWORKER", user);
             }
             RequestDispatcher rd = request.getRequestDispatcher("/WEB-INF/views/login.jsp");
             response.sendRedirect(request.getContextPath() + "/shop");
-            return;
         } else {
             request.setAttribute("loginError", "Ogiltig e-post eller lösenord.");
             RequestDispatcher rd = request.getRequestDispatcher("/WEB-INF/views/login.jsp");

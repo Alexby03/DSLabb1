@@ -1,13 +1,15 @@
 package se.kth.webapp.dslabb1.ui.controllers;
 
+import jakarta.servlet.RequestDispatcher;
 import jakarta.servlet.ServletException;
 import jakarta.servlet.annotation.WebServlet;
-import jakarta.servlet.http.*;
-import jakarta.servlet.RequestDispatcher;
-import java.io.IOException;
-
+import jakarta.servlet.http.HttpServlet;
+import jakarta.servlet.http.HttpServletRequest;
+import jakarta.servlet.http.HttpServletResponse;
 import se.kth.webapp.dslabb1.bo.models.Product;
 import se.kth.webapp.dslabb1.bo.services.ProductService;
+
+import java.io.IOException;
 
 @WebServlet("/product/*")
 public class ProductServlet extends HttpServlet {
@@ -15,9 +17,9 @@ public class ProductServlet extends HttpServlet {
     protected void doGet(HttpServletRequest request, HttpServletResponse response)
             throws ServletException, IOException {
 
-        String pathInfo = request.getPathInfo();    
+        String pathInfo = request.getPathInfo();
         String sku = null;
-        if(pathInfo != null && pathInfo.length() > 1) sku = pathInfo.substring(1);
+        if (pathInfo != null && pathInfo.length() > 1) sku = pathInfo.substring(1);
 
         if (sku == null || sku.isBlank()) {
             response.sendError(HttpServletResponse.SC_BAD_REQUEST, "SKU saknas");

@@ -14,8 +14,17 @@ import java.sql.SQLException;
 import java.util.ArrayList;
 import java.util.List;
 
+/**
+ * Service class providing methods for handling products to the presentation layer.
+ */
 public class ProductService {
 
+    /**
+     * Generates a new product to the database.
+     * @param newProduct instance of a product.
+     * @param userType whether the user is an admin or not.
+     * @return whether creating a product was successful or not.
+     */
     public static Result registerProduct(Product newProduct, UserType userType) {
         if(!UserType.ADMIN.equals(userType)) return Result.PRIVILEGE;
         if (newProduct == null || newProduct.getSku() == null || newProduct.getSku().isBlank()) return Result.FAILED;
@@ -48,6 +57,13 @@ public class ProductService {
         }
     }
 
+    /**
+     * Increases the quantity of the product.
+     * @param product
+     * @param plusQuantity
+     * @param userType
+     * @return whether increasing the quantity was successful or not.
+     */
     public static Result increaseQuantity(Product product, int plusQuantity, UserType userType) {
         if(!UserType.ADMIN.equals(userType)) return Result.PRIVILEGE;
 
@@ -60,6 +76,12 @@ public class ProductService {
         }
     }
 
+    /**
+     * Decreases the quantity of the product.
+     * @param product
+     * @param minusQuantity
+     * @return whether decreasing the quantity was successful or not.
+     */
     public static Result decreaseQuantity(Product product, int minusQuantity) {
         product.decreaseQuantity(minusQuantity);
         try (Connection conn = DBManager.getConnection()) {
@@ -70,19 +92,41 @@ public class ProductService {
         }
     }
 
+    /**
+     * Attempts to change the price of the product.
+     * @param product instance of the product.
+     * @param newPrice
+     * @param userType
+     * @return whether the price change was successful or not.
+     */
     public static Result changePrice(Product product, double newPrice, UserType userType) {
         if(!UserType.ADMIN.equals(userType)) return Result.PRIVILEGE;
         return ProductDAO.changePrice(product.getSku(), newPrice);
     }
 
+    /**
+     * Check whether the product is in stock.
+     * @param product
+     * @return true if in stock. False if not.
+     */
     public static boolean isInStock(Product product) {
         return product.getQuantity() > 0;
     }
 
+    /**
+     * Check whether the product is retired.
+     * @param product
+     * @return true if retired. False if not.
+     */
     public static boolean isRetired(Product product) {
         return product.isRetired();
     }
 
+    /**
+     * Attempts to find a product by its SKU.
+     * @param sku
+     * @return product instance if found, else null.
+     */
     public static Product findProductBySKU(String sku){
         if (sku == null || sku.isBlank()) return null;
 
@@ -95,6 +139,10 @@ public class ProductService {
         }
     }
 
+    /**
+     * Attempts to retrieve all products.
+     * @return a list of all products registered in the database.
+     */
     public static List<Product> getAllProducts() {
         try {
             List<ProductDAO> foundProducts = ProductDAO.findAll();

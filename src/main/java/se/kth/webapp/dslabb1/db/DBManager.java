@@ -5,8 +5,8 @@ import java.sql.DriverManager;
 import java.sql.SQLException;
 
 /**
- * Database connection manager
- * Creates new connection for each operation (thread-safe, transaction-safe)
+ * Database connection manager.
+ * Creates new connection for each operation in a current session.
  */
 public class DBManager {
 
@@ -22,6 +22,12 @@ public class DBManager {
         }
     }
 
+    /**
+     * Fetches a connection to the database for a method requesting it.
+     *
+     * @return the connection.
+     * @throws SQLException if connection fails to be established.
+     */
     public static Connection getConnection() throws SQLException {
         try {
             Connection conn = DriverManager.getConnection(DB_URL, DB_USER, DB_PASSWORD);
@@ -36,7 +42,9 @@ public class DBManager {
     }
 
     /**
-     * Test database connectivity
+     * Tries to connect to the database.
+     *
+     * @return whether connection was successful.
      */
     public static boolean testConnection() {
         try (Connection conn = getConnection()) {
@@ -48,7 +56,7 @@ public class DBManager {
     }
 
     /**
-     * Get database info for debugging
+     * Retrieves generic info of the database connected to.
      */
     public static String getDatabaseInfo() {
         try (Connection conn = getConnection()) {

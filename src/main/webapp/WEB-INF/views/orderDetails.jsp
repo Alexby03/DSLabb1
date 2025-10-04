@@ -1,10 +1,3 @@
-<%--
-  Created by IntelliJ IDEA.
-  User: BOTALEX
-  Date: 2025-10-03
-  Time: 20:14
-  To change this template use File | Settings | File Templates.
---%>
 <%@ page contentType="text/html; charset=UTF-8" pageEncoding="UTF-8" %>
 <%@ taglib prefix="c" uri="http://java.sun.com/jsp/jstl/core" %>
 <!DOCTYPE html>
@@ -27,53 +20,6 @@
         .product-list { width: 100%; max-width: 600px; margin: auto; border-collapse: collapse; }
         .product-list th, .product-list td { padding: 0.75rem 1rem; text-align: left; }
         .product-list th { background-color: #ffffff; color: #0062ff; }
-
-        .order-header {
-            background: #f8f9fa;
-            padding: 1rem;
-            border-radius: 8px;
-            margin-bottom: 1rem;
-            display: flex;
-            justify-content: space-between;
-            align-items: center;
-        }
-
-        .order-info h2 { margin: 0; color: #333; }
-        .order-status {
-            font-size: 1.2rem;
-            font-weight: bold;
-            padding: 0.5rem 1rem;
-            border-radius: 6px;
-        }
-        .status-PAID { background: #fff3cd; color: #856404; }
-        .status-SHIPPED { background: #cce5ff; color: #004085; }
-        .status-DELIVERED { background: #d4edda; color: #155724; }
-        .status-CANCELED { background: #f8d7da; color: #721c24; }
-
-        .success { background: #d4edda; color: #155724; padding: 1rem; border-radius: 4px; margin-bottom: 1rem; }
-        .error { background: #f8d7da; color: #721c24; padding: 1rem; border-radius: 4px; margin-bottom: 1rem; }
-
-        .order-summary {
-            background: #f8f9fa;
-            padding: 1rem;
-            border-radius: 8px;
-            margin-top: 1rem;
-        }
-
-        .action-buttons {
-            margin-top: 1rem;
-            display: flex;
-            gap: 1rem;
-        }
-
-        .debug-info {
-            background: #e2e3e5;
-            padding: 10px;
-            margin: 10px 0;
-            border-radius: 4px;
-            font-family: monospace;
-            font-size: 0.9rem;
-        }
     </style>
 </head>
 <body>
@@ -82,9 +28,6 @@
     <a href="${pageContext.request.contextPath}/orders">← Tillbaka till beställningar</a>
 </div>
 
-
-
-<!-- Success/Error Messages -->
 <c:if test="${not empty successMessage}">
     <div class="success">${successMessage}</div>
 </c:if>
@@ -93,7 +36,6 @@
     <div class="error">${errorMessage}</div>
 </c:if>
 
-<!-- Order Header -->
 <div class="order-header">
     <div class="order-info">
         <h2>Beställning #${order.orderId.toString().substring(0, 8)}</h2>
@@ -104,7 +46,6 @@
     </div>
 </div>
 
-<!-- Customer Information -->
 <div class="card">
     <h3>Leveransuppgifter</h3>
     <div class="text">${email}</div>
@@ -112,7 +53,6 @@
     <div class="text">${address}</div>
 </div>
 
-<!-- Order Items -->
 <h3>Beställda varor</h3>
 <table class="product-list">
     <tr>
@@ -122,6 +62,7 @@
         <th>Antal</th>
         <th>Summa</th>
     </tr>
+    <c:if test="${not empty orderItems}">
     <c:forEach var="item" items="${orderItems}">
         <tr>
             <td>${item.sku}</td>
@@ -131,15 +72,14 @@
             <td>${item.unitPrice * item.quantity} kr</td>
         </tr>
     </c:forEach>
+    </c:if>
 </table>
 
-<!-- Order Summary -->
 <div class="order-summary">
     <h3>Beställningssammanfattning</h3>
     <p><strong>Totalt pris: ${orderTotal} kr</strong></p>
 </div>
 
-<!-- Action Buttons -->
 <div class="action-buttons">
     <c:choose>
         <c:when test="${canCancel}">
@@ -154,8 +94,6 @@
             <button class="btn-primary" disabled>Kan inte avbeställas</button>
         </c:otherwise>
     </c:choose>
-
 </div>
-
 </body>
 </html>

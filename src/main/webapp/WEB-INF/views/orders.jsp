@@ -7,34 +7,15 @@
     <title>Mina ordrar</title>
     <style>
         body { font-family: system-ui, sans-serif; margin: 2rem; }
-        .card { border: 1px solid #ddd; border-radius: 8px; padding: 12px; margin-bottom: 16px; }
-        .card-container { display: flex; flex-direction: column; gap: 1rem; }
         .nav { display: flex; gap: 1rem; align-items: center; margin-bottom: 2rem; }
         .nav a { text-decoration: none; color: #007bff; }
         .nav a:hover { text-decoration: underline; }
         button { padding: 8px 14px; border: none; border-radius: 4px; cursor: pointer; }
         .btn-primary { background: #007bff; color: white; }
         .btn-primary:hover { background: #1b3044 }
-        .btn-danger { background: #d99aa0; color: white; }
-        .btn-success { background: #6e9877; color: white; }
-        .text { font-weight: 600; color: #2b2b2b; }
-        .product-list { width: 100%; max-width: 600px; margin: auto; border-collapse: collapse; }
         .product-list th, .product-list td { padding: 0.75rem 1rem; text-align: left; }
         .product-list th { background-color: #ffffff; color: #0062ff; }
         .no-orders { text-align: center; padding: 3rem; color: #6c757d; }
-        .back-button {
-            background: #333;
-            color: white;
-            border: 2px solid #333;
-            border-radius: 8px;
-            padding: 10px 20px;
-            font-size: 16px;
-            cursor: pointer;
-            text-decoration: none;
-            display: inline-block;
-            margin-bottom: 30px;
-        }
-        .back-button:hover { background: #555; }
         .order-card {
             background: white;
             border: 2px solid #ddd;
@@ -45,10 +26,7 @@
             cursor: pointer;
             transition: all 0.3s ease;
         }
-        .order-card:hover {
-            border-color: #007bff;
-            box-shadow: 0 4px 8px rgba(0,123,255,0.2);
-        }
+        .order-card:hover { border-color: #007bff; box-shadow: 0 4px 8px rgba(0,123,255,0.2); }
         .order-header { display: flex; justify-content: space-between; align-items: flex-start; }
         .order-info { flex: 1; }
         .order-id { font-size: 18px; font-weight: bold; color: #333; margin-bottom: 8px; }
@@ -67,12 +45,10 @@
     <a href="${pageContext.request.contextPath}/profile">Bakåt</a>
 </div>
 
-<!-- Error Message -->
 <c:if test="${not empty errorMessage}">
     <div class="error">${errorMessage}</div>
 </c:if>
 
-<!-- Order List -->
 <c:choose>
     <c:when test="${hasOrder}">
         <h2>Dina beställningar (${orderCount} st)</h2>

@@ -1,14 +1,23 @@
 package se.kth.webapp.dslabb1.db.data;
 
-import se.kth.webapp.dslabb1.bo.models.*;
+import se.kth.webapp.dslabb1.bo.models.Cart;
+import se.kth.webapp.dslabb1.bo.models.CartItem;
 import se.kth.webapp.dslabb1.bo.models.enums.Result;
 import se.kth.webapp.dslabb1.db.DBManager;
 
-import java.sql.*;
-import java.util.*;
+import java.sql.Connection;
+import java.sql.PreparedStatement;
+import java.sql.ResultSet;
+import java.sql.SQLException;
+import java.util.ArrayList;
+import java.util.List;
+import java.util.UUID;
 
 /**
- * DAO record for Cart operations - matches T_Cart table structure
+ * Data access object for entities in table T_Cart in DB schema.
+ * A cart data access objects represents a given product currently in a
+ * customer's cart. To properly represent an entire cart, a list of cart
+ * data access objects is used.
  */
 public record CartDAO(
         UUID userId,
@@ -17,7 +26,12 @@ public record CartDAO(
 ) {
 
     /**
-     * Add item to cart (or update quantity if exists)
+     * Adds an item to a customer's cart.
+     *
+     * @param userId   if of the customer.
+     * @param sku      the product id.
+     * @param quantity amount of said product.
+     * @return whether adding the product to cart was successful.
      */
     public static Result addItemToCart(UUID userId, String sku, int quantity) {
         String sql = "INSERT INTO T_Cart (userId, sku, quantity) VALUES (?, ?, ?) " +
@@ -39,7 +53,11 @@ public record CartDAO(
     }
 
     /**
-     * Find cart items by user ID
+     * Attempts to find a cart for a customer.
+     * Cart is presented as a list of cart data access objects.
+     *
+     * @param userId id of the cart's customer.
+     * @return list of cart data access objects within that cart.
      */
     public static List<CartDAO> findByUserId(UUID userId) {
         List<CartDAO> cartItems = new ArrayList<>();
@@ -68,7 +86,11 @@ public record CartDAO(
     }
 
     /**
-     * Find cart items with product details (JOIN query)
+     * Attempts to find a cart for a customer.
+     * Cart is presented as a list of cart item instances containing further product details.
+     *
+     * @param userId id of the cart's customer.
+     * @return list of cart item instances within that cart.
      */
     public static List<CartItem> findCartItemsWithProductDetails(UUID userId) {
         List<CartItem> cartItems = new ArrayList<>();
@@ -100,10 +122,11 @@ public record CartDAO(
     }
 
     /**
-     * Looks for a cartItem to return
-     * @param userId id of cart owner
-     * @param sku id of product
-     * @return the cartItem, else null if such item does not exist in cart
+     * Attempts to find a specific cart item for a customer.
+     *
+     * @param userId id of the customer
+     * @param sku    id of the product within the item searched.
+     * @return a cart item matching the query.
      */
     public static CartItem findCartItemBySKU(UUID userId, String sku) {
         String sql = "SELECT c.sku, c.quantity, p.productName, p.price " +
@@ -118,7 +141,7 @@ public record CartDAO(
 
             ResultSet rs = stmt.executeQuery();
 
-            if(!rs.next())
+            if (!rs.next())
                 return null;
 
             return new CartItem(
@@ -133,7 +156,12 @@ public record CartDAO(
     }
 
     /**
-     * Update cart item quantity
+     * Attempts to update the quantity of a given product within an item in a cart.
+     *
+     * @param userId      the ID of the customer owning the cart.
+     * @param sku         the product within the item.
+     * @param newQuantity of the product within the item.
+     * @return whether updating the quantity was successful or not.
      */
     public static Result updateCartItemQuantity(UUID userId, String sku, int newQuantity) {
         if (newQuantity <= 0) {
@@ -158,7 +186,11 @@ public record CartDAO(
     }
 
     /**
-     * Remove item from cart
+     * Attempts to remove an item from the cart.
+     *
+     * @param userId the ID of the customer owning the cart.
+     * @param sku    the product within the item.
+     * @return whether removing the item from the cart was successful or not.
      */
     public static Result removeItemFromCart(UUID userId, String sku) {
         String sql = "DELETE FROM T_Cart WHERE userId = ? AND sku = ?";
@@ -178,9 +210,14 @@ public record CartDAO(
     }
 
     /**
-     * Clear entire cart for a user
+     * Attempts to clear the cart of a given customer.
+     *
+     * @param userId id of the customer owning the cart.
+     * @param conn   connection to the database.
+     * @return whether clearing the cart was successful or not.
+     * @throws SQLException when an error occurs on the database side.
      */
-    public static Result clearCart(UUID userId, Connection conn) throws SQLException{
+    public static Result clearCart(UUID userId, Connection conn) throws SQLException {
         String sql = "DELETE FROM T_Cart WHERE userId = ?";
 
         try (PreparedStatement stmt = conn.prepareStatement(sql)) {
@@ -193,7 +230,10 @@ public record CartDAO(
     }
 
     /**
-     * Get cart for a user (reconstruct Cart object from database)
+     * Attempts to retrieve a customer's cart.
+     *
+     * @param userId id of the cart's customer.
+     * @return the cart for the given user,
      */
     public static Cart getCartForUser(UUID userId) {
         List<CartItem> cartItems = findCartItemsWithProductDetails(userId);
