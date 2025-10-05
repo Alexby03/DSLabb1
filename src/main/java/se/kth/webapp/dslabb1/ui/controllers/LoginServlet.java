@@ -26,7 +26,6 @@ public class LoginServlet extends HttpServlet {
     @Override
     protected void doPost(HttpServletRequest request, HttpServletResponse response)
             throws ServletException, IOException {
-
         String email = request.getParameter("email");
         String password = request.getParameter("password");
 
@@ -34,15 +33,21 @@ public class LoginServlet extends HttpServlet {
 
         if (user != null) {
             HttpSession session = request.getSession(true);
-            if (user.getUserType() == UserType.CUSTOMER) {
-                session.setAttribute("CUSTOMER", user);
-            } else if (user.getUserType() == UserType.ADMIN) {
-                session.setAttribute("ADMIN", user);
-            } else if (user.getUserType() == UserType.WAREHOUSEWORKER) {
-                session.setAttribute("WAREHOUSEWORKER", user);
+
+            switch (user.getUserType()) {
+                case CUSTOMER -> {
+                    session.setAttribute("CUSTOMER", user);
+                    response.sendRedirect(request.getContextPath() + "/shop");
+                }
+                case ADMIN -> {
+                    session.setAttribute("ADMIN", user);
+                    response.sendRedirect(request.getContextPath() + "/admin/dashboard");
+                }
+                case WAREHOUSEWORKER -> {
+                    session.setAttribute("WAREHOUSEWORKER", user);
+                    response.sendRedirect(request.getContextPath() + "/warehouse/dashboard");
+                }
             }
-            RequestDispatcher rd = request.getRequestDispatcher("/WEB-INF/views/login.jsp");
-            response.sendRedirect(request.getContextPath() + "/shop");
         } else {
             request.setAttribute("loginError", "Ogiltig e-post eller lösenord.");
             RequestDispatcher rd = request.getRequestDispatcher("/WEB-INF/views/login.jsp");

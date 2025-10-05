@@ -69,7 +69,7 @@
                             </div>
                         </div>
                         <div class="order-status status-${order.orderStatus}">
-                            status: ${order.orderStatus}
+                            Status: ${order.orderStatus}
                         </div>
                     </div>
                 </div>

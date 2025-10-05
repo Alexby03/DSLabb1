@@ -9,6 +9,7 @@
     <style>
         body { font-family: system-ui, sans-serif; margin: 2rem; }
         header { display:flex; align-items:center; justify-content:space-between; margin-bottom:1rem; }
+        .header1 { background: #2c3e50; color: white; padding: 1rem 2rem; display: flex; justify-content: space-between; align-items: center; }
         .nav { display:flex; gap:1rem; align-items:center; }
         .nav a { text-decoration: none; color: #333; padding: 0.5rem 1rem; }
         .nav a:hover { background: #f0f0f0; border-radius: 4px; }
@@ -32,13 +33,15 @@
 <body>
 
 <header>
-    <div class="nav">
-        <a href="${pageContext.request.contextPath}/profile">Profil</a>
-    </div>
-    <div class="nav">
-        <a href="${pageContext.request.contextPath}/cart" class="cart-link">
-            🛒 <span class="cart-count">${cartItemCount > 0 ? cartItemCount : 0}</span>
-        </a>
+    <div class="header">
+        <h1>Webbutik</h1>
+        <div class="nav">
+            <a href="${pageContext.request.contextPath}/logout">Logga ut</a>
+            <a href="${pageContext.request.contextPath}/profile">Profil</a>
+            <a href="${pageContext.request.contextPath}/cart" class="cart-link">
+                🛒 <span class="cart-count">${cartItemCount > 0 ? cartItemCount : 0}</span>
+            </a>
+        </div>
     </div>
 </header>
 <div class="error">

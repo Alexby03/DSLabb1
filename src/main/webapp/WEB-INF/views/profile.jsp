@@ -5,8 +5,10 @@
     <meta charset="UTF-8"/>
     <title>Redigera Profil</title>
     <style>
+
         body { font-family: system-ui, sans-serif; margin: 2rem; }
         .card { max-width: 500px; padding: 1.25rem; border: 1px solid #ddd; border-radius: 8px; }
+        .header { background: #2c3e50; color: white; padding: 1rem 2rem; display: flex; justify-content: space-between; align-items: center; }
         .error { color: rgba(193, 114, 133, 0.93); margin-top: 0.5rem; }
         .success { color: #649b64; margin-bottom: 1rem; }
         .nav-links { margin-bottom: 1rem; }
@@ -18,6 +20,10 @@
     </style>
 </head>
 <body>
+
+<div class="header">
+    <h1>Redigera Profil</h1>
+</div>
 <div class="card">
     <div class="nav-links">
         <a href="${pageContext.request.contextPath}/shop">← Tillbaka till butik</a>
