@@ -31,7 +31,7 @@
 </head>
 <body>
 <div class="header">
-    <h1>📦 Produkthantering</h1>
+    <h1>Produkthantering</h1>
     <div class="nav">
         <a href="${pageContext.request.contextPath}/admin/dashboard">Dashboard</a>
         <a href="${pageContext.request.contextPath}/admin/orders">Ordrar</a>
