@@ -7,7 +7,7 @@ import jakarta.servlet.http.HttpServlet;
 import jakarta.servlet.http.HttpServletRequest;
 import jakarta.servlet.http.HttpServletResponse;
 import jakarta.servlet.http.HttpSession;
-import se.kth.webapp.dslabb1.bo.models.Worker;
+import se.kth.webapp.dslabb1.ui.info.UserInfo;
 
 import java.io.IOException;
 
@@ -24,7 +24,7 @@ public class WarehouseDashboardServlet extends HttpServlet {
             return;
         }
 
-        Worker worker = (Worker) session.getAttribute("WAREHOUSEWORKER");
+        UserInfo worker = (UserInfo) session.getAttribute("WAREHOUSEWORKER");
         request.setAttribute("worker", worker);
 
         RequestDispatcher rd = request.getRequestDispatcher("/WEB-INF/views/warehouse/dashboard.jsp");

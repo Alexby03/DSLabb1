@@ -7,9 +7,8 @@ import jakarta.servlet.http.HttpServlet;
 import jakarta.servlet.http.HttpServletRequest;
 import jakarta.servlet.http.HttpServletResponse;
 import jakarta.servlet.http.HttpSession;
-import se.kth.webapp.dslabb1.bo.models.IUser;
-import se.kth.webapp.dslabb1.bo.models.enums.UserType;
 import se.kth.webapp.dslabb1.bo.services.UserService;
+import se.kth.webapp.dslabb1.ui.info.UserInfo;
 
 import java.io.IOException;
 
@@ -29,12 +28,12 @@ public class LoginServlet extends HttpServlet {
         String email = request.getParameter("email");
         String password = request.getParameter("password");
 
-        IUser user = UserService.authenticateUser(email, password);
+        UserInfo user = UserService.authenticateUser(email, password);
 
         if (user != null) {
             HttpSession session = request.getSession(true);
 
-            switch (user.getUserType()) {
+            switch (user.userType()) {
                 case CUSTOMER -> {
                     session.setAttribute("CUSTOMER", user);
                     response.sendRedirect(request.getContextPath() + "/shop");

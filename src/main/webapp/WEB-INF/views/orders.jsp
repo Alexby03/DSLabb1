@@ -53,23 +53,23 @@
     <c:when test="${hasOrder}">
         <h2>Dina beställningar (${orderCount} st)</h2>
         <c:forEach var="order" items="${orders}" varStatus="status">
-            <a href="${pageContext.request.contextPath}/orders?orderId=${order.orderId}"
+            <a href="${pageContext.request.contextPath}/orders?orderId=${order.orderId()}"
                style="text-decoration: none; color: inherit;">
                 <div class="order-card">
                     <div class="order-header">
                         <div class="order-info">
                             <div class="order-id">
-                                order id: ${order.orderId.toString().substring(0, 8)}...
+                                order id: ${order.orderId().toString().substring(0, 8)}...
                             </div>
                             <div class="order-date">
-                                date: ${order.dateOfPurchase.toString().substring(0, 10)}
+                                date: ${order.dateOfPurchase().toString().substring(0, 10)}
                             </div>
                             <div class="click-hint">
                                 Klicka för detaljer
                             </div>
                         </div>
-                        <div class="order-status status-${order.orderStatus}">
-                            Status: ${order.orderStatus}
+                        <div class="order-status status-${order.orderStatus()}">
+                            Status: ${order.orderStatus()}
                         </div>
                     </div>
                 </div>

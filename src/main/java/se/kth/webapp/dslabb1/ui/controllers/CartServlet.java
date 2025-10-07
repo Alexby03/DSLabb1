@@ -7,11 +7,11 @@ import jakarta.servlet.http.HttpServlet;
 import jakarta.servlet.http.HttpServletRequest;
 import jakarta.servlet.http.HttpServletResponse;
 import jakarta.servlet.http.HttpSession;
-import se.kth.webapp.dslabb1.bo.models.Cart;
-import se.kth.webapp.dslabb1.bo.models.CartItem;
-import se.kth.webapp.dslabb1.bo.models.Customer;
 import se.kth.webapp.dslabb1.bo.models.enums.Result;
 import se.kth.webapp.dslabb1.bo.services.CartService;
+import se.kth.webapp.dslabb1.ui.info.CartInfo;
+import se.kth.webapp.dslabb1.ui.info.CartItemInfo;
+import se.kth.webapp.dslabb1.ui.info.UserInfo;
 
 import java.io.IOException;
 import java.util.List;
@@ -24,17 +24,17 @@ public class CartServlet extends HttpServlet {
             throws ServletException, IOException {
 
         HttpSession session = request.getSession();
-        Customer customer = (Customer) session.getAttribute("CUSTOMER");
+        UserInfo customer = (UserInfo) session.getAttribute("CUSTOMER");
 
         if (customer == null) {
             response.sendRedirect(request.getContextPath() + "/login");
             return;
         }
 
-        Cart userCart = CartService.getUserCart(customer.getId(), customer.getUserType());
-        List<CartItem> cartItems = (userCart != null) ? userCart.items() : List.of();
-        double cartTotal = CartService.getCartTotal(customer.getId(), customer.getUserType());
-        int cartItemCount = CartService.getCartItemCount(customer.getId(), customer.getUserType());
+        CartInfo userCart = CartService.getUserCart(customer.userId(), customer.userType());
+        List<CartItemInfo> cartItems = (userCart != null) ? userCart.items() : List.of();
+        double cartTotal = CartService.getCartTotal(customer.userId(), customer.userType());
+        int cartItemCount = CartService.getCartItemCount(customer.userId(), customer.userType());
 
         request.setAttribute("cartItems", cartItems);
         request.setAttribute("cartTotal", cartTotal);
@@ -50,7 +50,7 @@ public class CartServlet extends HttpServlet {
             throws ServletException, IOException {
 
         HttpSession session = request.getSession();
-        Customer customer = (Customer) session.getAttribute("CUSTOMER");
+        UserInfo customer = (UserInfo) session.getAttribute("CUSTOMER");
 
         if (customer == null) {
             response.sendRedirect(request.getContextPath() + "/login");
@@ -71,7 +71,7 @@ public class CartServlet extends HttpServlet {
                     if (sku != null && quantityStr != null) {
                         int quantity = Integer.parseInt(quantityStr);
                         result = CartService.updateCartItemQuantity(
-                                customer.getId(), sku, quantity, customer.getUserType());
+                                customer.userId(), sku, quantity, customer.userType());
 
                         if (result == Result.SUCCESS) {
                             successMessage = "Cart has updated!";
@@ -85,7 +85,7 @@ public class CartServlet extends HttpServlet {
                     String sku = request.getParameter("sku");
                     if (sku != null) {
                         result = CartService.removeItemFromCart(
-                                customer.getId(), sku, customer.getUserType());
+                                customer.userId(), sku, customer.userType());
 
                         if (result == Result.SUCCESS) {
                             successMessage = "Produkt borttagen från kundvagnen!";
@@ -96,7 +96,7 @@ public class CartServlet extends HttpServlet {
                 }
 
                 case "clearCart" -> {
-                    result = CartService.clearCart(customer.getId(), customer.getUserType());
+                    result = CartService.clearCart(customer.userId(), customer.userType());
 
                     if (result == Result.SUCCESS) {
                         successMessage = "Kundvagnen är nu tom!";
@@ -130,10 +130,10 @@ public class CartServlet extends HttpServlet {
         }
 
         // Reload cart data after operation
-        Cart userCart = CartService.getUserCart(customer.getId(), customer.getUserType());
-        List<CartItem> cartItems = (userCart != null) ? userCart.items() : List.of();
-        double cartTotal = CartService.getCartTotal(customer.getId(), customer.getUserType());
-        int cartItemCount = CartService.getCartItemCount(customer.getId(), customer.getUserType());
+        CartInfo userCart = CartService.getUserCart(customer.userId(), customer.userType());
+        List<CartItemInfo> cartItems = (userCart != null) ? userCart.items() : List.of();
+        double cartTotal = CartService.getCartTotal(customer.userId(), customer.userType());
+        int cartItemCount = CartService.getCartItemCount(customer.userId(), customer.userType());
 
         request.setAttribute("cartItems", cartItems);
         request.setAttribute("cartTotal", cartTotal);

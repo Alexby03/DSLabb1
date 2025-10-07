@@ -7,11 +7,11 @@ import jakarta.servlet.http.HttpServlet;
 import jakarta.servlet.http.HttpServletRequest;
 import jakarta.servlet.http.HttpServletResponse;
 import jakarta.servlet.http.HttpSession;
-import se.kth.webapp.dslabb1.bo.models.Admin;
-import se.kth.webapp.dslabb1.bo.models.Product;
 import se.kth.webapp.dslabb1.bo.models.enums.Category;
 import se.kth.webapp.dslabb1.bo.models.enums.Result;
 import se.kth.webapp.dslabb1.bo.services.ProductService;
+import se.kth.webapp.dslabb1.ui.info.ProductInfo;
+import se.kth.webapp.dslabb1.ui.info.UserInfo;
 
 import java.io.IOException;
 import java.util.List;
@@ -29,8 +29,8 @@ public class AdminProductServlet extends HttpServlet {
             return;
         }
 
-        Admin admin = (Admin) session.getAttribute("ADMIN");
-        List<Product> products = ProductService.getAllProducts();
+        UserInfo admin = (UserInfo) session.getAttribute("ADMIN");
+        List<ProductInfo> products = ProductService.getAllProducts();
 
         request.setAttribute("admin", admin);
         request.setAttribute("products", products);
@@ -50,7 +50,7 @@ public class AdminProductServlet extends HttpServlet {
             return;
         }
 
-        Admin admin = (Admin) session.getAttribute("ADMIN");
+        UserInfo admin = (UserInfo) session.getAttribute("ADMIN");
         String action = request.getParameter("action");
 
         try {
@@ -67,7 +67,7 @@ public class AdminProductServlet extends HttpServlet {
         doGet(request, response);
     }
 
-    private void createProduct(HttpServletRequest request, Admin admin) {
+    private void createProduct(HttpServletRequest request, UserInfo admin) {
         String sku = request.getParameter("sku");
         String name = request.getParameter("name");
         String description = request.getParameter("description");
@@ -80,8 +80,8 @@ public class AdminProductServlet extends HttpServlet {
             int quantity = Integer.parseInt(quantityStr);
             double price = Double.parseDouble(priceStr);
 
-            Product newProduct = new Product(sku, name, description, category, quantity, price, false);
-            Result result = ProductService.registerProduct(newProduct, admin.getUserType());
+            ProductInfo newProduct = new ProductInfo(sku, name, description, category, quantity, price, false);
+            Result result = ProductService.registerProduct(newProduct, admin.userType());
 
             if (result == Result.SUCCESS) {
                 request.setAttribute("successMessage", "Produkt skapad.");
@@ -93,16 +93,16 @@ public class AdminProductServlet extends HttpServlet {
         }
     }
 
-    private void updateStock(HttpServletRequest request, Admin admin) {
+    private void updateStock(HttpServletRequest request, UserInfo admin) {
         String sku = request.getParameter("sku");
         String quantityStr = request.getParameter("quantity");
 
         try {
             int quantity = Integer.parseInt(quantityStr);
-            Product product = ProductService.findProductBySKU(sku);
+            ProductInfo product = ProductService.findProductBySKU(sku);
 
             if (product != null) {
-                Result result = ProductService.increaseQuantity(product, quantity, admin.getUserType());
+                Result result = ProductService.increaseQuantity(sku, quantity, admin.userType());  //TODO: check if works with sku
                 if (result == Result.SUCCESS) {
                     request.setAttribute("successMessage", "Lager uppdaterat.");
                 } else {
@@ -114,16 +114,16 @@ public class AdminProductServlet extends HttpServlet {
         }
     }
 
-    private void updatePrice(HttpServletRequest request, Admin admin) {
+    private void updatePrice(HttpServletRequest request, UserInfo admin) {
         String sku = request.getParameter("sku");
         String priceStr = request.getParameter("price");
 
         try {
             double price = Double.parseDouble(priceStr);
-            Product product = ProductService.findProductBySKU(sku);
+            ProductInfo product = ProductService.findProductBySKU(sku);
 
             if (product != null) {
-                Result result = ProductService.changePrice(product, price, admin.getUserType());
+                Result result = ProductService.changePrice(sku, price, admin.userType());
                 if (result == Result.SUCCESS) {
                     request.setAttribute("successMessage", "Pris uppdaterat.");
                 } else {

@@ -8,11 +8,14 @@ import java.sql.SQLException;
  * Database connection manager.
  * Creates new connection for each operation in a current session.
  */
-public class DBManager {
+public class DBManager implements AutoCloseable {
 
     private static final String DB_URL = "jdbc:mysql://78.72.148.32:3306/webshop";
     private static final String DB_USER = "admin";
     private static final String DB_PASSWORD = "admin";
+
+    private Connection conn;
+    private boolean transactionActive = false;
 
     static {
         try {
@@ -22,23 +25,75 @@ public class DBManager {
         }
     }
 
+    public DBManager() {
+        try {
+            this.conn = DriverManager.getConnection(DB_URL, DB_USER, DB_PASSWORD);
+            if (this.conn == null || this.conn.isClosed()) {
+                throw new SQLException("Failed to create database connection");
+            }
+        } catch (SQLException e) {
+            throw new DataAccessException("Failed to establish database connection: " + e);
+        }
+    }
+
+    /**
+     * Creates a new DBManager instance and opens a connection.
+     */
+    public static DBManager open() {
+        return new DBManager();
+    }
+
+    /**
+     * Starts a database transaction.
+     */
+    public void startTransaction() {
+        try {
+            conn.setAutoCommit(false);
+            transactionActive = true;
+        } catch (SQLException e) {
+            throw new DataAccessException("Failed to start transaction: " + e);
+        }
+    }
+
+    /**
+     * Commits the current transaction.
+     */
+    public void commit() {
+        try {
+            if (transactionActive) {
+                conn.commit();
+                conn.setAutoCommit(true);
+                transactionActive = false;
+            }
+        } catch (SQLException e) {
+            throw new DataAccessException("Failed to commit transaction: " + e);
+        }
+    }
+
+    /**
+     * Rolls back the current transaction.
+     */
+    public void rollback() {
+        try {
+            if (transactionActive) {
+                conn.rollback();
+                conn.setAutoCommit(true);
+                transactionActive = false;
+            }
+        } catch (SQLException e) {
+            System.err.println("Rollback failed: " + e.getMessage());
+        }
+    }
+
+
     /**
      * Fetches a connection to the database for a method requesting it.
      *
      * @return the connection.
      * @throws SQLException if connection fails to be established.
      */
-    public static Connection getConnection() throws SQLException {
-        try {
-            Connection conn = DriverManager.getConnection(DB_URL, DB_USER, DB_PASSWORD);
-            if (conn == null || conn.isClosed()) {
-                throw new SQLException("Failed to create database connection");
-            }
-            return conn;
-        } catch (SQLException e) {
-            System.err.println("Database connection failed: " + e.getMessage());
-            throw e;  // Re-throw for caller to handle
-        }
+    public Connection getConnection() {
+        return conn;
     }
 
     /**
@@ -47,7 +102,7 @@ public class DBManager {
      * @return whether connection was successful.
      */
     public static boolean testConnection() {
-        try (Connection conn = getConnection()) {
+        try (Connection conn = DriverManager.getConnection(DB_URL, DB_USER, DB_PASSWORD)) {
             return true;
         } catch (SQLException e) {
             System.err.println("Database connection test failed: " + e.getMessage());
@@ -59,11 +114,25 @@ public class DBManager {
      * Retrieves generic info of the database connected to.
      */
     public static String getDatabaseInfo() {
-        try (Connection conn = getConnection()) {
+        try (Connection conn = DriverManager.getConnection(DB_URL, DB_USER, DB_PASSWORD)) {
             return "Connected to: " + conn.getMetaData().getURL() +
                     " | Driver: " + conn.getMetaData().getDriverName();
         } catch (SQLException e) {
             return "Database connection failed: " + e.getMessage();
+        }
+    }
+
+    /**
+     * Closes the underlying connection.
+     */
+    @Override
+    public void close() {
+        try {
+            if (conn != null && !conn.isClosed()) {
+                conn.close();
+            }
+        } catch (SQLException e) {
+            System.err.println("Failed to close connection: " + e.getMessage());
         }
     }
 }

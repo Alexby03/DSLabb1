@@ -5,6 +5,7 @@ import se.kth.webapp.dslabb1.bo.models.Order;
 import se.kth.webapp.dslabb1.bo.models.enums.OrderStatus;
 import se.kth.webapp.dslabb1.bo.models.enums.Result;
 import se.kth.webapp.dslabb1.db.DBManager;
+import se.kth.webapp.dslabb1.db.DataAccessException;
 
 import java.math.BigDecimal;
 import java.sql.Connection;
@@ -36,7 +37,7 @@ public record OrderDAO(
      * @return whether generating the order was successful or not.
      * @throws SQLException if creating the order failed on the database end.
      */
-    public static Result createOrder(Connection conn, Order order) throws SQLException {
+    public static Result createOrder(Connection conn, Order order) throws DataAccessException {
         String sql = "INSERT INTO T_Order (orderId, userId, totalAmount, dateOfPurchase, orderStatus) VALUES (?, ?, ?, ?, ?)";
         try (PreparedStatement ps = conn.prepareStatement(sql)) {
             ps.setString(1, order.getOrderId().toString());
@@ -45,6 +46,8 @@ public record OrderDAO(
             ps.setTimestamp(4, java.sql.Timestamp.valueOf(order.getDateOfPurchase()));
             ps.setString(5, order.getOrderStatus().name());
             return ps.executeUpdate() > 0 ? Result.SUCCESS : Result.FAILED;
+        } catch (SQLException e) {
+            throw new DataAccessException(e.getMessage());
         }
     }
 
@@ -57,8 +60,8 @@ public record OrderDAO(
     public static OrderDAO findById(UUID orderId) {
         String sql = "SELECT * FROM T_Order WHERE orderId = ?";
 
-        try (Connection conn = DBManager.getConnection();
-             PreparedStatement stmt = conn.prepareStatement(sql)) {
+        try (DBManager db = DBManager.open();
+             PreparedStatement stmt = db.getConnection().prepareStatement(sql)) {
 
             stmt.setString(1, orderId.toString());
 
@@ -90,8 +93,8 @@ public record OrderDAO(
         List<OrderDAO> orders = new ArrayList<>();
         String sql = "SELECT * FROM T_Order WHERE userId = ? ORDER BY dateOfPurchase DESC";
 
-        try (Connection conn = DBManager.getConnection();
-             PreparedStatement stmt = conn.prepareStatement(sql)) {
+        try (DBManager db = DBManager.open();
+             PreparedStatement stmt = db.getConnection().prepareStatement(sql)) {
 
             stmt.setString(1, userId.toString());
 
@@ -123,8 +126,8 @@ public record OrderDAO(
         List<OrderDAO> orders = new ArrayList<>();
         String sql = "SELECT * FROM T_Order ORDER BY dateOfPurchase DESC";
 
-        try (Connection conn = DBManager.getConnection();
-             PreparedStatement stmt = conn.prepareStatement(sql);
+        try (DBManager db = DBManager.open();
+             PreparedStatement stmt = db.getConnection().prepareStatement(sql);
              ResultSet rs = stmt.executeQuery()) {
 
             while (rs.next()) {
@@ -154,8 +157,8 @@ public record OrderDAO(
     public static Result updateOrderStatus(UUID orderId, OrderStatus newStatus) {
         String sql = "UPDATE T_Order SET orderStatus = ? WHERE orderId = ?";
 
-        try (Connection conn = DBManager.getConnection();
-             PreparedStatement stmt = conn.prepareStatement(sql)) {
+        try (DBManager db = DBManager.open();
+             PreparedStatement stmt = db.getConnection().prepareStatement(sql)) {
 
             stmt.setString(1, newStatus.name());
             stmt.setString(2, orderId.toString());

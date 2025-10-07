@@ -3,6 +3,7 @@ package se.kth.webapp.dslabb1.db.data;
 import se.kth.webapp.dslabb1.bo.models.Item;
 import se.kth.webapp.dslabb1.bo.models.enums.Result;
 import se.kth.webapp.dslabb1.db.DBManager;
+import se.kth.webapp.dslabb1.db.DataAccessException;
 
 import java.sql.Connection;
 import java.sql.PreparedStatement;
@@ -28,7 +29,7 @@ public record ItemDAO(
      * @param item the item instance to copy from.
      * @return whether creating a product was successful or not.
      */
-    public static Result createItem(Connection conn, Item item) throws SQLException {
+    public static Result createItem(Connection conn, Item item) throws DataAccessException {
 
         String sql = "INSERT INTO T_Item (orderId, sku, quantity) VALUES (?, ?, ?)";
         try (PreparedStatement ps = conn.prepareStatement(sql)) {
@@ -36,6 +37,8 @@ public record ItemDAO(
             ps.setString(2, item.sku());
             ps.setInt(3, item.quantity());
             return ps.executeUpdate() > 0 ? Result.SUCCESS : Result.FAILED;
+        } catch (SQLException e) {
+            throw new DataAccessException(e.getMessage());
         }
     }
 
@@ -49,8 +52,8 @@ public record ItemDAO(
         List<ItemDAO> items = new ArrayList<>();
         String sql = "SELECT orderId, sku, quantity FROM T_Item WHERE orderId = ?";
 
-        try (Connection conn = DBManager.getConnection();
-             PreparedStatement stmt = conn.prepareStatement(sql)) {
+        try (DBManager db = DBManager.open();
+             PreparedStatement stmt = db.getConnection().prepareStatement(sql)) {
 
             stmt.setString(1, orderId.toString());
 
@@ -83,8 +86,8 @@ public record ItemDAO(
                 "FROM T_Item i JOIN T_Product p ON i.sku = p.sku " +
                 "WHERE i.orderId = ?";
 
-        try (Connection conn = DBManager.getConnection();
-             PreparedStatement stmt = conn.prepareStatement(sql)) {
+        try (DBManager db = DBManager.open();
+             PreparedStatement stmt = db.getConnection().prepareStatement(sql)) {
 
             stmt.setString(1, orderId.toString());
 

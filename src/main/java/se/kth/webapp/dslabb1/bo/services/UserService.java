@@ -1,12 +1,13 @@
 package se.kth.webapp.dslabb1.bo.services;
 
-import se.kth.webapp.dslabb1.bo.models.Admin;
 import se.kth.webapp.dslabb1.bo.models.Customer;
 import se.kth.webapp.dslabb1.bo.models.IUser;
-import se.kth.webapp.dslabb1.bo.models.Worker;
 import se.kth.webapp.dslabb1.bo.models.enums.Result;
 import se.kth.webapp.dslabb1.bo.models.enums.UserType;
 import se.kth.webapp.dslabb1.db.data.UserDAO;
+import se.kth.webapp.dslabb1.ui.info.UserInfo;
+
+import java.util.UUID;
 
 /**
  * Service class providing methods for handling users to the presentation layer.
@@ -20,7 +21,7 @@ public class UserService {
      * @param password of the customer
      * @return a customer if succeeded login, else null.
      */
-    public static IUser authenticateUser(String email, String password) {
+    public static UserInfo authenticateUser(String email, String password) {
         UserDAO user = UserDAO.findByEmail(email);
         if (user == null) {
             return null;
@@ -28,21 +29,15 @@ public class UserService {
         if (user.userPassword().equals(password)) {
             switch (user.userType()) {
                 case UserType.CUSTOMER -> {
-                    return new Customer(
-                            user.userId(), user.email(), user.address(),
-                            user.fullName(), user.paymentMethod(), user.isActive()
+                    return new UserInfo(
+                            user.userId(), user.email(), user.fullName(),
+                            user.userType(), user.isActive(), user.address(), user.paymentMethod()
                     );
                 }
-                case UserType.ADMIN -> {
-                    return new Admin(
-                            user.userId(), user.email(),
-                            user.fullName(), user.isActive()
-                    );
-                }
-                case UserType.WAREHOUSEWORKER -> {
-                    return new Worker(
-                            user.userId(), user.email(),
-                            user.fullName(), user.isActive()
+                default -> { //for admin and warehouseworker
+                    return new UserInfo(
+                            user.userId(), user.email(), user.fullName(),
+                            user.userType(), user.isActive(), null, null
                     );
                 }
             }
@@ -78,24 +73,33 @@ public class UserService {
      * @param newPaymentMethod
      * @return whether updating the customer was successful or not.
      */
-    public static Result updateCustomer(String newEmail, String newFullName, String newAddress, String userPassword, Customer customer, String newPaymentMethod) {
+    public static Result updateCustomer(String newEmail, String newFullName, String newAddress, String userPassword, UserInfo customer, String newPaymentMethod) {
 
         if (customer == null) {
             return Result.FAILED;
         }
 
         if (userPassword == null || userPassword.isBlank()) {
-            UserDAO existingData = UserDAO.findById(customer.getId());
+            UserDAO existingData = UserDAO.findById(customer.userId());
             userPassword = existingData != null ? existingData.userPassword() : "";
         }
 
-        String email = (newEmail != null && !newEmail.isBlank()) ? newEmail : customer.getEmail();
-        String fullName = (newFullName != null && !newFullName.isBlank()) ? newFullName : customer.getFullName();
-        String address = (newAddress != null) ? newAddress : customer.getAddress();
-        String paymentMethod = (newPaymentMethod != null) ? newPaymentMethod : customer.getPaymentMethod();
+        String email = (newEmail != null && !newEmail.isBlank()) ? newEmail : customer.email();
+        String fullName = (newFullName != null && !newFullName.isBlank()) ? newFullName : customer.fullName();
+        String address = (newAddress != null) ? newAddress : customer.address();
+        String paymentMethod = (newPaymentMethod != null) ? newPaymentMethod : customer.paymentMethod();
 
-        Customer user = new Customer(customer.getId(), email, address, fullName, paymentMethod, customer.isActive());
+        Customer user = new Customer(customer.userId(), email, address, fullName, paymentMethod, customer.isActive());
         return UserDAO.updateUser(user, userPassword);
+    }
+
+    public static UserInfo findById(UUID userId) {
+        UserDAO foundUser = UserDAO.findById(userId);
+        if (foundUser == null) {
+            return null;
+        }
+        return new UserInfo(foundUser.userId(), foundUser.email(), foundUser.fullName(),
+                foundUser.userType(), foundUser.isActive(), foundUser.address(), foundUser.paymentMethod());
     }
 
 }

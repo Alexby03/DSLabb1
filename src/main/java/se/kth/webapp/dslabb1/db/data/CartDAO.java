@@ -4,6 +4,7 @@ import se.kth.webapp.dslabb1.bo.models.Cart;
 import se.kth.webapp.dslabb1.bo.models.CartItem;
 import se.kth.webapp.dslabb1.bo.models.enums.Result;
 import se.kth.webapp.dslabb1.db.DBManager;
+import se.kth.webapp.dslabb1.db.DataAccessException;
 
 import java.sql.Connection;
 import java.sql.PreparedStatement;
@@ -37,8 +38,8 @@ public record CartDAO(
         String sql = "INSERT INTO T_Cart (userId, sku, quantity) VALUES (?, ?, ?) " +
                 "ON DUPLICATE KEY UPDATE quantity = quantity + VALUES(quantity)";
 
-        try (Connection conn = DBManager.getConnection();
-             PreparedStatement stmt = conn.prepareStatement(sql)) {
+        try (DBManager db = DBManager.open();
+             PreparedStatement stmt = db.getConnection().prepareStatement(sql)) {
 
             stmt.setString(1, userId.toString());
             stmt.setString(2, sku);
@@ -63,8 +64,8 @@ public record CartDAO(
         List<CartDAO> cartItems = new ArrayList<>();
         String sql = "SELECT * FROM T_Cart WHERE userId = ?";
 
-        try (Connection conn = DBManager.getConnection();
-             PreparedStatement stmt = conn.prepareStatement(sql)) {
+        try (DBManager db = DBManager.open();
+             PreparedStatement stmt = db.getConnection().prepareStatement(sql)) {
 
             stmt.setString(1, userId.toString());
 
@@ -98,8 +99,8 @@ public record CartDAO(
                 "FROM T_Cart c JOIN T_Product p ON c.sku = p.sku " +
                 "WHERE c.userId = ?";
 
-        try (Connection conn = DBManager.getConnection();
-             PreparedStatement stmt = conn.prepareStatement(sql)) {
+        try (DBManager db = DBManager.open();
+             PreparedStatement stmt = db.getConnection().prepareStatement(sql)){
 
             stmt.setString(1, userId.toString());
 
@@ -133,8 +134,8 @@ public record CartDAO(
                 "FROM T_Cart c JOIN T_Product p ON c.sku = p.sku " +
                 "WHERE c.userId = ? AND c.sku = ?";
 
-        try (Connection conn = DBManager.getConnection();
-             PreparedStatement stmt = conn.prepareStatement(sql)) {
+        try (DBManager db = DBManager.open();
+             PreparedStatement stmt = db.getConnection().prepareStatement(sql)) {
 
             stmt.setString(1, userId.toString());
             stmt.setString(2, sku);
@@ -170,8 +171,8 @@ public record CartDAO(
 
         String sql = "UPDATE T_Cart SET quantity = ? WHERE userId = ? AND sku = ?";
 
-        try (Connection conn = DBManager.getConnection();
-             PreparedStatement stmt = conn.prepareStatement(sql)) {
+        try (DBManager db = DBManager.open();
+             PreparedStatement stmt = db.getConnection().prepareStatement(sql)) {
 
             stmt.setInt(1, newQuantity);
             stmt.setString(2, userId.toString());
@@ -195,8 +196,8 @@ public record CartDAO(
     public static Result removeItemFromCart(UUID userId, String sku) {
         String sql = "DELETE FROM T_Cart WHERE userId = ? AND sku = ?";
 
-        try (Connection conn = DBManager.getConnection();
-             PreparedStatement stmt = conn.prepareStatement(sql)) {
+        try (DBManager db = DBManager.open();
+             PreparedStatement stmt = db.getConnection().prepareStatement(sql)) {
 
             stmt.setString(1, userId.toString());
             stmt.setString(2, sku);
@@ -217,7 +218,7 @@ public record CartDAO(
      * @return whether clearing the cart was successful or not.
      * @throws SQLException when an error occurs on the database side.
      */
-    public static Result clearCart(UUID userId, Connection conn) throws SQLException {
+    public static Result clearCart(UUID userId, Connection conn) throws DataAccessException {
         String sql = "DELETE FROM T_Cart WHERE userId = ?";
 
         try (PreparedStatement stmt = conn.prepareStatement(sql)) {
@@ -226,6 +227,8 @@ public record CartDAO(
 
             return stmt.executeUpdate() > 0 ? Result.SUCCESS : Result.FAILED;
 
+        } catch (SQLException e) {
+            throw new DataAccessException(e.getMessage());
         }
     }
 

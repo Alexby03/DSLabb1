@@ -4,8 +4,9 @@ import se.kth.webapp.dslabb1.bo.models.Product;
 import se.kth.webapp.dslabb1.bo.models.enums.Category;
 import se.kth.webapp.dslabb1.bo.models.enums.Result;
 import se.kth.webapp.dslabb1.db.DBManager;
-
+import se.kth.webapp.dslabb1.db.DataAccessException;
 import java.math.BigDecimal;
+
 import java.sql.Connection;
 import java.sql.PreparedStatement;
 import java.sql.ResultSet;
@@ -35,8 +36,8 @@ public record ProductDAO(
     public static Result createProduct(ProductDAO productDao) {
         String sql = "INSERT INTO T_Product (sku, productName, productDescription, category, quantity, price, isRetired) VALUES (?, ?, ?, ?, ?, ?, ?)";
 
-        try (Connection conn = DBManager.getConnection();
-             PreparedStatement stmt = conn.prepareStatement(sql)) {
+        try (DBManager db = DBManager.open();
+             PreparedStatement stmt = db.getConnection().prepareStatement(sql)) {
 
             stmt.setString(1, productDao.sku);
             stmt.setString(2, productDao.productName);
@@ -63,8 +64,8 @@ public record ProductDAO(
     public static ProductDAO findBySku(String sku) {
         String sql = "SELECT * FROM T_Product WHERE sku = ?";
 
-        try (Connection conn = DBManager.getConnection();
-             PreparedStatement stmt = conn.prepareStatement(sql)) {
+        try (DBManager db = DBManager.open();
+             PreparedStatement stmt = db.getConnection().prepareStatement(sql)) {
 
             stmt.setString(1, sku);
 
@@ -110,8 +111,8 @@ public record ProductDAO(
             params.add("%" + productName.trim() + "%");
         }
 
-        try (Connection conn = DBManager.getConnection();
-             PreparedStatement stmt = conn.prepareStatement(sql.toString())) {
+        try (DBManager db = DBManager.open();
+             PreparedStatement stmt = db.getConnection().prepareStatement(sql.toString())) {
 
             for (int i = 0; i < params.size(); i++) {
                 Object p = params.get(i);
@@ -146,8 +147,8 @@ public record ProductDAO(
         List<ProductDAO> products = new ArrayList<>();
         String sql = "SELECT * FROM T_Product";
 
-        try (Connection conn = DBManager.getConnection();
-             PreparedStatement stmt = conn.prepareStatement(sql);
+        try (DBManager db = DBManager.open();
+             PreparedStatement stmt = db.getConnection().prepareStatement(sql);
              ResultSet rs = stmt.executeQuery()) {
 
             while (rs.next()) {
@@ -178,8 +179,8 @@ public record ProductDAO(
         List<ProductDAO> products = new ArrayList<>();
         String sql = "SELECT * FROM T_Product WHERE isRetired = FALSE AND quantity > 0";
 
-        try (Connection conn = DBManager.getConnection();
-             PreparedStatement stmt = conn.prepareStatement(sql);
+        try (DBManager db = DBManager.open();
+             PreparedStatement stmt = db.getConnection().prepareStatement(sql);
              ResultSet rs = stmt.executeQuery()) {
 
             while (rs.next()) {
@@ -210,7 +211,7 @@ public record ProductDAO(
      * @return whether updating the product was successful or not.
      * @throws SQLException if updating the product failed.
      */
-    public static Result updateStock(String sku, int newQuantity, Connection conn) throws SQLException {
+    public static Result updateStock(String sku, int newQuantity, Connection conn) throws DataAccessException {
         String sql = "UPDATE T_Product SET quantity = ? WHERE sku = ?";
 
         try (PreparedStatement stmt = conn.prepareStatement(sql)) {
@@ -220,6 +221,8 @@ public record ProductDAO(
 
             return stmt.executeUpdate() > 0 ? Result.SUCCESS : Result.FAILED;
 
+        } catch (SQLException e) {
+            throw new DataAccessException(e.getMessage());
         }
     }
 
@@ -233,8 +236,8 @@ public record ProductDAO(
     public static Result changePrice(String sku, double newPrice) {
         String sql = "UPDATE T_Product SET price = ? WHERE sku = ?";
 
-        try (Connection conn = DBManager.getConnection();
-             PreparedStatement stmt = conn.prepareStatement(sql)) {
+        try (DBManager db = DBManager.open();
+             PreparedStatement stmt = db.getConnection().prepareStatement(sql)) {
 
             stmt.setBigDecimal(1, BigDecimal.valueOf(newPrice));
             stmt.setString(2, sku);

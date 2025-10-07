@@ -64,25 +64,25 @@
 <section class="grid">
     <c:forEach var="p" items="${products}">
         <div class="card">
-            <div class="title">${p.name}</div>
-            <div class="price">${p.price} kr</div>
-            <div class="desc">${p.description}</div>
+            <div class="title">${p.name()}</div>
+            <div class="price">${p.price()} kr</div>
+            <div class="desc">${p.description()}</div>
 
             <c:choose>
-                <c:when test="${p.quantity > 0 && !p.retired}">
+                <c:when test="${p.quantity() > 0 && !p.retired()}">
                     <form method="post" action="${pageContext.request.contextPath}/shop" class="add-to-cart-form">
                         <input type="hidden" name="action" value="addToCart"/>
-                        <input type="hidden" name="sku" value="${p.sku}"/>
-                        <input type="number" name="quantity" value="1" min="1" max="${p.quantity}"/>
+                        <input type="hidden" name="sku" value="${p.sku()}"/>
+                        <input type="number" name="quantity" value="1" min="1" max="${p.quantity()}"/>
                         <button type="submit" class="add-to-cart-btn">Lägg i kundvagn</button>
                     </form>
                     <div style="font-size: 0.8rem; color: #6c757d; margin-top: 4px;">
-                        Lager: ${p.quantity} st
+                        Lager: ${p.quantity()} st
                     </div>
                 </c:when>
                 <c:otherwise>
                     <div class="out-of-stock" style="margin-top: 8px;">
-                            ${p.retired ? 'Utgått' : 'Slut i lager'}
+                            ${p.retired() ? 'Utgått' : 'Slut i lager'}
                     </div>
                 </c:otherwise>
             </c:choose>

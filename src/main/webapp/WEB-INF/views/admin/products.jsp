@@ -111,23 +111,23 @@
             <tbody>
             <c:forEach var="product" items="${products}">
                 <tr>
-                    <td>${product.sku}</td>
-                    <td>${product.name}</td>
-                    <td>${product.category}</td>
-                    <td>${product.price} kr</td>
-                    <td class="${product.quantity < 10 ? 'low-stock' : ''}">${product.quantity}</td>
-                    <td>${product.retired ? 'Utgått' : 'Aktiv'}</td>
+                    <td>${product.sku()}</td>
+                    <td>${product.name()}</td>
+                    <td>${product.category()}</td>
+                    <td>${product.price()} kr</td>
+                    <td class="${product.quantity() < 10 ? 'low-stock' : ''}">${product.quantity()}</td>
+                    <td>${product.retired() ? 'Utgått' : 'Aktiv'}</td>
                     <td>
                         <form method="post" action="${pageContext.request.contextPath}/admin/products" class="action-form">
                             <input type="hidden" name="action" value="updateStock"/>
-                            <input type="hidden" name="sku" value="${product.sku}"/>
+                            <input type="hidden" name="sku" value="${product.sku()}"/>
                             <input type="number" name="quantity" placeholder="Lägg till" style="width: 60px; padding: 4px;" min="0"/>
                             <button type="submit" class="btn-primary" style="padding: 4px 8px;">+Lager</button>
                         </form>
 
                         <form method="post" action="${pageContext.request.contextPath}/admin/products" class="action-form">
                             <input type="hidden" name="action" value="updatePrice"/>
-                            <input type="hidden" name="sku" value="${product.sku}"/>
+                            <input type="hidden" name="sku" value="${product.sku()}"/>
                             <input type="number" step="0.01" name="price" placeholder="Nytt pris" style="width: 80px; padding: 4px;"/>
                             <button type="submit" class="btn-primary" style="padding: 4px 8px;">Ändra pris</button>
                         </form>

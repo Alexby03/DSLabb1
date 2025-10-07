@@ -43,10 +43,10 @@
     </tr>
     <c:forEach var="item" items="${cartItems}">
         <tr>
-            <th>${item.sku}</th>
-            <th>${item.productName}</th>
-            <th>${item.price}</th>
-            <th>${item.quantity}</th>
+            <th>${item.sku()}</th>
+            <th>${item.productName()}</th>
+            <th>${item.price()}</th>
+            <th>${item.quantity()}</th>
         </tr>
     </c:forEach>
 </table>

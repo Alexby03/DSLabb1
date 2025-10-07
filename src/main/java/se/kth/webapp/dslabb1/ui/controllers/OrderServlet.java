@@ -7,11 +7,11 @@ import jakarta.servlet.http.HttpServletRequest;
 import jakarta.servlet.http.HttpServletResponse;
 import jakarta.servlet.http.HttpSession;
 
-import se.kth.webapp.dslabb1.bo.models.Customer;
-import se.kth.webapp.dslabb1.bo.models.Order;
 import se.kth.webapp.dslabb1.bo.models.enums.OrderStatus;
 import se.kth.webapp.dslabb1.bo.models.enums.Result;
 import se.kth.webapp.dslabb1.bo.services.OrderService;
+import se.kth.webapp.dslabb1.ui.info.OrderInfo;
+import se.kth.webapp.dslabb1.ui.info.UserInfo;
 
 import java.io.IOException;
 import java.util.List;
@@ -30,7 +30,7 @@ public class OrderServlet extends HttpServlet {
             return;
         }
 
-        Customer customer = (Customer) session.getAttribute("CUSTOMER");
+        UserInfo customer = (UserInfo) session.getAttribute("CUSTOMER");
         if (customer == null) {
             response.sendRedirect(request.getContextPath() + "/logout");
             return;
@@ -53,26 +53,26 @@ public class OrderServlet extends HttpServlet {
         }
     }
 
-    private void showOrderList(HttpServletRequest request, HttpServletResponse response, Customer customer)
+    private void showOrderList(HttpServletRequest request, HttpServletResponse response, UserInfo customer)
             throws ServletException, IOException {
 
-        List<Order> orders = OrderService.getCustomerOrders(customer.getId(), customer.getUserType());
+        List<OrderInfo> orders = OrderService.getCustomerOrders(customer.userId(), customer.userType());
 
         request.setAttribute("orders", orders);
         request.setAttribute("hasOrder", !orders.isEmpty());
         request.setAttribute("orderCount", orders.size());
-        request.setAttribute("customerName", customer.getFullName());
+        request.setAttribute("customerName", customer.fullName());
 
 
         request.getRequestDispatcher("/WEB-INF/views/orders.jsp").forward(request, response);
     }
 
-    private void showOrderDetails(HttpServletRequest request, HttpServletResponse response, Customer customer, String orderIdParam)
+    private void showOrderDetails(HttpServletRequest request, HttpServletResponse response, UserInfo customer, String orderIdParam)
             throws ServletException, IOException {
 
         try {
             UUID orderId = UUID.fromString(orderIdParam);
-            Order order = OrderService.getOrderById(orderId, customer.getId(), customer.getUserType());
+            OrderInfo order = OrderService.getOrderById(orderId, customer.userId(), customer.userType());
 
             if (order == null) {
                 request.setAttribute("errorMessage", "Beställning hittades inte.");
@@ -81,7 +81,7 @@ public class OrderServlet extends HttpServlet {
             }
 
             // Verify order belongs to customer
-            if (!order.getCustomerId().equals(customer.getId())) {
+            if (!order.customerId().equals(customer.userId())) {
                 request.setAttribute("errorMessage", "Du har inte behörighet att visa denna beställning.");
                 showOrderList(request, response, customer);
                 return;
@@ -89,14 +89,14 @@ public class OrderServlet extends HttpServlet {
 
             // Set attributes for order details page
             request.setAttribute("order", order);
-            request.setAttribute("orderItems", order.getItems());
-            request.setAttribute("orderTotal", order.getTotalAmount());
-            request.setAttribute("canCancel", order.getOrderStatus() == OrderStatus.PAID);
+            request.setAttribute("orderItems", order.items());
+            request.setAttribute("orderTotal", order.totalAmount());
+            request.setAttribute("canCancel", order.orderStatus() == OrderStatus.PAID);
 
             // Customer info
-            request.setAttribute("email", customer.getEmail());
-            request.setAttribute("name", customer.getFullName());
-            request.setAttribute("address", customer.getAddress());
+            request.setAttribute("email", customer.email());
+            request.setAttribute("name", customer.fullName());
+            request.setAttribute("address", customer.address());
 
             request.getRequestDispatcher("/WEB-INF/views/orderDetails.jsp").forward(request, response);
 
@@ -116,7 +116,7 @@ public class OrderServlet extends HttpServlet {
             return;
         }
 
-        Customer customer = (Customer) session.getAttribute("CUSTOMER");
+        UserInfo customer = (UserInfo) session.getAttribute("CUSTOMER");
         if (customer == null) {
             response.sendRedirect(request.getContextPath() + "/logout");
             return;
@@ -132,13 +132,13 @@ public class OrderServlet extends HttpServlet {
         }
     }
 
-    private void cancelOrder(HttpServletRequest request, HttpServletResponse response, Customer customer, String orderIdParam)
+    private void cancelOrder(HttpServletRequest request, HttpServletResponse response, UserInfo customer, String orderIdParam)
             throws ServletException, IOException {
 
         try {
             UUID orderId = UUID.fromString(orderIdParam);
 
-            Result cancelResult = OrderService.cancelOrder(customer.getId(), orderId, customer.getUserType());
+            Result cancelResult = OrderService.cancelOrder(customer.userId(), orderId, customer.userType());
 
             if (cancelResult == Result.SUCCESS) {
                 request.setAttribute("successMessage", "Ordern har avbeställts.");

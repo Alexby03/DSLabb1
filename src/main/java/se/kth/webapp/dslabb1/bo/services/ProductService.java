@@ -1,23 +1,27 @@
 package se.kth.webapp.dslabb1.bo.services;
 
-import com.mysql.cj.MysqlConnection;
-import com.mysql.cj.exceptions.ClosedOnExpiredPasswordException;
 import se.kth.webapp.dslabb1.bo.models.Product;
 import se.kth.webapp.dslabb1.bo.models.enums.Category;
 import se.kth.webapp.dslabb1.bo.models.enums.Result;
 import se.kth.webapp.dslabb1.bo.models.enums.UserType;
 import se.kth.webapp.dslabb1.db.DBManager;
+import se.kth.webapp.dslabb1.db.DataAccessException;
 import se.kth.webapp.dslabb1.db.data.ProductDAO;
+import se.kth.webapp.dslabb1.ui.info.ProductInfo;
 
-import java.sql.Connection;
-import java.sql.SQLException;
 import java.util.ArrayList;
 import java.util.List;
+import java.util.stream.Collectors;
 
 /**
  * Service class providing methods for handling products to the presentation layer.
  */
 public class ProductService {
+
+    public static ProductInfo toProductInfo(Product product) {
+        return new ProductInfo(product.getSku(),product.getName(),product.getDescription(), product.getCategory(), product.getQuantity(),
+                product.getPrice(), product.isRetired());
+    }
 
     /**
      * Generates a new product to the database.
@@ -25,15 +29,16 @@ public class ProductService {
      * @param userType whether the user is an admin or not.
      * @return whether creating a product was successful or not.
      */
-    public static Result registerProduct(Product newProduct, UserType userType) {
+    public static Result registerProduct(ProductInfo newProduct, UserType userType) {
         if(!UserType.ADMIN.equals(userType)) return Result.PRIVILEGE;
-        if (newProduct == null || newProduct.getSku() == null || newProduct.getSku().isBlank()) return Result.FAILED;
-        if (newProduct.getPrice() < 0 || newProduct.getQuantity() < 0) return Result.FAILED;
+        if (newProduct == null || newProduct.sku() == null || newProduct.sku().isBlank()) return Result.FAILED;
+        if (newProduct.price() < 0 || newProduct.quantity() < 0) return Result.FAILED;
 
-        return ProductDAO.createProduct(new ProductDAO(newProduct.getSku(),
-                newProduct.getName(), newProduct.getDescription(),
-                newProduct.getCategory(), newProduct.getQuantity(),
-                newProduct.getPrice(), newProduct.isRetired()));
+        return ProductDAO.createProduct(new ProductDAO(newProduct.sku(),
+                newProduct.name(), newProduct.description(),
+                newProduct.category(), newProduct.quantity(),
+                newProduct.price(), newProduct.retired())
+        );
     }
 
     /**
@@ -42,35 +47,35 @@ public class ProductService {
      * @param productName string, name of product.
      * @return list of products matching the query.
      */
-    public static List<Product> findProductByCategoryAndName(String productName, Category category) {
-        try{
+    public static List<ProductInfo> findProductByCategoryAndName(String productName, Category category) {
+        try {
             List<ProductDAO> foundProducts = ProductDAO.findByCategoryAndName(category, productName);
-            List<Product> products = new ArrayList<>();
-            for(ProductDAO productDAO : foundProducts){
-                products.add(new Product(productDAO.sku(), productDAO.productName(), productDAO.productDescription(),
-                        productDAO.category(), productDAO.quantity(), productDAO.price(), productDAO.isRetired()));
-            }
-            return products;
+            return foundProducts.stream()
+                    .map(ProductDAO::toDomainModel)
+                    .map(ProductService::toProductInfo)
+                    .collect(Collectors.toList());
         } catch (Exception e) {
-            System.err.println("Error finding product by NAME " + productName);
-            return null;
+            System.err.println("Error finding product by NAME: " + productName);
+            return new ArrayList<>();
         }
     }
 
     /**
      * Increases the quantity of the product.
-     * @param product
+     * @param sku
      * @param plusQuantity
      * @param userType
      * @return whether increasing the quantity was successful or not.
      */
-    public static Result increaseQuantity(Product product, int plusQuantity, UserType userType) {
+    public static Result increaseQuantity(String sku, int plusQuantity, UserType userType) {
         if(!UserType.ADMIN.equals(userType)) return Result.PRIVILEGE;
-
+        ProductDAO foundSKU = ProductDAO.findBySku(sku);
+        if (foundSKU == null)  return Result.FAILED;
+        Product product = foundSKU.toDomainModel();
         product.increaseQuantity(plusQuantity);
-        try (Connection conn = DBManager.getConnection()) {
-            return ProductDAO.updateStock(product.getSku(), product.getQuantity(), conn);
-        } catch (SQLException e) {
+        try (DBManager db = DBManager.open()) {
+            return ProductDAO.updateStock(product.getSku(), product.getQuantity(), db.getConnection());
+        } catch (DataAccessException e) {
             System.err.println("Error increasing stock " + product.getSku());
             return Result.FAILED;
         }
@@ -84,9 +89,9 @@ public class ProductService {
      */
     public static Result decreaseQuantity(Product product, int minusQuantity) {
         product.decreaseQuantity(minusQuantity);
-        try (Connection conn = DBManager.getConnection()) {
-            return ProductDAO.updateStock(product.getSku(), product.getQuantity(), conn);
-        } catch (SQLException e) {
+        try (DBManager db = DBManager.open()) {
+            return ProductDAO.updateStock(product.getSku(), product.getQuantity(), db.getConnection());
+        } catch (DataAccessException e) {
             System.err.println("Error decreasing stock " + product.getQuantity());
             return Result.FAILED;
         }
@@ -94,15 +99,20 @@ public class ProductService {
 
     /**
      * Attempts to change the price of the product.
-     * @param product instance of the product.
+     * @param sku Instance of sku belonging to a product
      * @param newPrice
      * @param userType
      * @return whether the price change was successful or not.
      */
-    public static Result changePrice(Product product, double newPrice, UserType userType) {
-        if(!UserType.ADMIN.equals(userType)) return Result.PRIVILEGE;
-        return ProductDAO.changePrice(product.getSku(), newPrice);
+    public static Result changePrice(String sku, double newPrice, UserType userType) {
+        if (!UserType.ADMIN.equals(userType))
+            return Result.PRIVILEGE;
+        if (sku == null || sku.isBlank())
+            return Result.FAILED;
+
+        return ProductDAO.changePrice(sku, newPrice);
     }
+
 
     /**
      * Check whether the product is in stock.
@@ -127,14 +137,17 @@ public class ProductService {
      * @param sku
      * @return product instance if found, else null.
      */
-    public static Product findProductBySKU(String sku){
+    public static ProductInfo findProductBySKU(String sku) {
         if (sku == null || sku.isBlank()) return null;
-
-        try{
+        try {
             ProductDAO foundSKU = ProductDAO.findBySku(sku);
-            return foundSKU != null ? foundSKU.toDomainModel() : null;
+            if (foundSKU != null) {
+                Product product = foundSKU.toDomainModel();
+                return toProductInfo(product);
+            }
+            return null;
         } catch (Exception e) {
-            System.err.println("Error finding product by SKU " + sku);
+            System.err.println("Error finding product by SKU: " + sku);
             return null;
         }
     }
@@ -143,16 +156,13 @@ public class ProductService {
      * Attempts to retrieve all products.
      * @return a list of all products registered in the database.
      */
-    public static List<Product> getAllProducts() {
+    public static List<ProductInfo> getAllProducts() {
         try {
             List<ProductDAO> foundProducts = ProductDAO.findAll();
-            List<Product> products = new ArrayList<>();
-            for(ProductDAO productDAO : foundProducts)
-            {
-                products.add(new Product(productDAO.sku(), productDAO.productName(), productDAO.productDescription(),
-                        productDAO.category(), productDAO.quantity(), productDAO.price(), productDAO.isRetired()));
-            }
-            return products;
+            return foundProducts.stream()
+                    .map(ProductDAO::toDomainModel)
+                    .map(ProductService::toProductInfo)
+                    .collect(Collectors.toList());
         } catch (Exception e) {
             System.err.println("Error getting all products: " + e.getMessage());
             return new ArrayList<>();

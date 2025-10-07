@@ -6,8 +6,8 @@ import jakarta.servlet.annotation.WebServlet;
 import jakarta.servlet.http.HttpServlet;
 import jakarta.servlet.http.HttpServletRequest;
 import jakarta.servlet.http.HttpServletResponse;
-import se.kth.webapp.dslabb1.bo.models.Product;
 import se.kth.webapp.dslabb1.bo.services.ProductService;
+import se.kth.webapp.dslabb1.ui.info.ProductInfo;
 
 import java.io.IOException;
 
@@ -26,7 +26,7 @@ public class ProductServlet extends HttpServlet {
             return;
         }
 
-        Product product = ProductService.findProductBySKU(sku);
+        ProductInfo product = ProductService.findProductBySKU(sku);
         if (product == null) {
             response.sendError(HttpServletResponse.SC_NOT_FOUND, "Produkten hittades inte");
             return;

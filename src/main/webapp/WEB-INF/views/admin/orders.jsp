@@ -53,7 +53,7 @@
             <c:forEach var="order" items="${orders}">
                 <tr>
                     <td>${order.orderId().toString().substring(0, 8)}...</td>
-                    <td>${order.userId().toString().substring(0, 8)}...</td>
+                    <td>${order.customerId().toString().substring(0, 8)}...</td>
                     <td>${order.dateOfPurchase()}</td>
                     <td>${order.totalAmount()} kr</td>
                     <td class="status-${order.orderStatus()}">${order.orderStatus()}</td>

@@ -8,80 +8,86 @@ import se.kth.webapp.dslabb1.bo.models.enums.OrderStatus;
 import se.kth.webapp.dslabb1.bo.models.enums.Result;
 import se.kth.webapp.dslabb1.bo.models.enums.UserType;
 import se.kth.webapp.dslabb1.db.DBManager;
+import se.kth.webapp.dslabb1.db.DataAccessException;
 import se.kth.webapp.dslabb1.db.data.CartDAO;
 import se.kth.webapp.dslabb1.db.data.ItemDAO;
 import se.kth.webapp.dslabb1.db.data.OrderDAO;
 import se.kth.webapp.dslabb1.db.data.ProductDAO;
+import se.kth.webapp.dslabb1.ui.info.ItemInfo;
+import se.kth.webapp.dslabb1.ui.info.OrderInfo;
 
-import java.sql.Connection;
-import java.sql.SQLException;
 import java.util.ArrayList;
 import java.util.List;
 import java.util.UUID;
+import java.util.stream.Collectors;
 
 /**
  * Service class providing methods for handling orders to the presentation layer.
  */
 public class OrderService {
 
+
+    public static ItemInfo toItemInfo(Item item) {
+        return new ItemInfo(item.orderId(), item.sku(), item.productName(), item.unitPrice(), item.quantity());
+    }
+
+    public static OrderInfo toOrderInfo(Order order) {
+        if (order == null) return null;
+        List<ItemInfo> itemInfoList = order.getItems().stream()
+                .map(OrderService::toItemInfo)
+                .collect(Collectors.toList());
+        return new OrderInfo(order.getOrderId(), order.getCustomerId(), order.getDateOfPurchase(), itemInfoList, order.getOrderStatus(), order.getTotalAmount());
+    }
+
     /**
-     * Attempts to generate a new order to the database by using a cart.
+     * Creates an order from the user's current cart.
+     * This method fetches the cart internally and performs all business logic.
      *
-     * @param userId the id of the customer who made the order.
-     * @param cart   the customer's cart instance.
-     * @return whether generating the order was successful or not.
+     * @param userId the customer creating the order
+     * @return Result indicating success or failure
      */
-    public static Result createOrderFromCart(UUID userId, Cart cart) {
-        try (Connection conn = DBManager.getConnection()) {
+    public static Result createOrderFromCart(UUID userId) {
 
-            conn.setAutoCommit(false);
+        try (DBManager db = DBManager.open()) {
 
-            try {
+            db.startTransaction();
 
-                Order order = new Order(userId, cart.items());
-                Result orderResult = OrderDAO.createOrder(conn, order);
+            Cart cart = CartDAO.getCartForUser(userId);
+            Order order = new Order(userId, cart.items());
+            if (OrderDAO.createOrder(db.getConnection(), order) == Result.FAILED) {
+                db.rollback();
+                return Result.FAILED;
+            }
 
-                if (orderResult == Result.FAILED) {
+            for (CartItem cartItem : cart.items()) {
+                Item item = new Item(order.getOrderId(), cartItem.getSku(), cartItem.getProductName(),
+                        cartItem.getPrice(), cartItem.getQuantity());
 
-                    conn.rollback();
+                if (ItemDAO.createItem(db.getConnection(), item) != Result.SUCCESS) {
+                    db.rollback();
                     return Result.FAILED;
                 }
 
-                for (CartItem cartItem : cart.items()) {
-
-                    Item item = new Item(order.getOrderId(), cartItem.getSku(), cartItem.getProductName(),
-                            cartItem.getPrice(), cartItem.getQuantity());
-                    Result itemResult = ItemDAO.createItem(conn, item);
-                    if (itemResult != Result.SUCCESS) {
-                        conn.rollback();
-                        return Result.FAILED;
-                    }
-
-                    String productSKU = cartItem.getSku();
-                    int currenStockDiff = ProductDAO.findBySku(productSKU).quantity() - cartItem.getQuantity();
-                    if (currenStockDiff < 0) return Result.FAILED;
-                    ProductDAO.updateStock(productSKU, currenStockDiff, conn);
-
+                String sku = cartItem.getSku();
+                int newStock = ProductDAO.findBySku(sku).quantity() - cartItem.getQuantity();
+                if (newStock < 0) {
+                    db.rollback();
+                    return Result.FAILED;
                 }
 
-                CartDAO.clearCart(userId, conn);
-                conn.commit();
-                return Result.SUCCESS;
-
-            } catch (SQLException e) {
-
-                conn.rollback();
-                return Result.FAILED;
-
+                ProductDAO.updateStock(sku, newStock, db.getConnection());
             }
-        } catch (SQLException e) {
 
-            System.err.println("Error creating Order: " + e.getMessage());
+            CartDAO.clearCart(userId, db.getConnection());
+            db.commit();
+            return Result.SUCCESS;
+
+        } catch (DataAccessException e) {
+            System.err.println("Order transaction failed: " + e.getMessage());
             return Result.FAILED;
-
         }
-
     }
+
 
     /**
      * Cancels an order.
@@ -98,68 +104,62 @@ public class OrderService {
 
         }
 
-        try (Connection conn = DBManager.getConnection()) {
+        try (DBManager db = DBManager.open()) {
 
-            conn.setAutoCommit(false);
+            db.startTransaction();
 
-            try {
 
-                OrderDAO currentOrder = OrderDAO.findById(orderId);
-                if (currentOrder == null) {
+            OrderDAO currentOrder = OrderDAO.findById(orderId);
+            if (currentOrder == null) {
 
-                    conn.rollback();
-                    return Result.FAILED;
-
-                }
-
-                // Auth check if customer owns order or is admin
-
-                if (UserType.CUSTOMER.equals(userType) && !currentOrder.userId().equals(userId)) {
-
-                    conn.rollback();
-                    return Result.FAILED;
-
-                }
-
-                if (!UserType.ADMIN.equals(userType) && !UserType.CUSTOMER.equals(userType)) {
-
-                    conn.rollback();
-                    return Result.PRIVILEGE;
-
-                }
-
-                if (currentOrder.orderStatus() != OrderStatus.PAID) {
-
-                    conn.rollback();
-                    return Result.FAILED;
-
-                }
-
-                OrderDAO.updateOrderStatus(orderId, OrderStatus.CANCELED);
-
-                List<ItemDAO> orderItems = ItemDAO.findByOrderId(orderId);
-                for (ItemDAO itemDAO : orderItems) {
-                    ProductDAO product = ProductDAO.findBySku(itemDAO.sku());
-                    if (product != null) {
-                        int newStock = product.quantity() + itemDAO.quantity();
-                        Result stockUpdate = ProductDAO.updateStock(itemDAO.sku(), newStock, conn);
-                        if (stockUpdate != Result.SUCCESS) {
-                            conn.rollback();
-                            return Result.FAILED;
-                        }
-                    }
-                }
-
-                conn.commit();
-                return Result.SUCCESS;
-
-            } catch (SQLException e) {
-
-                conn.rollback();
+                db.rollback();
                 return Result.FAILED;
 
             }
-        } catch (SQLException e) {
+
+            // Auth check if customer owns order or is admin
+
+            if (UserType.CUSTOMER.equals(userType) && !currentOrder.userId().equals(userId)) {
+
+                db.rollback();
+                return Result.FAILED;
+
+            }
+
+            if (!UserType.ADMIN.equals(userType) && !UserType.CUSTOMER.equals(userType)) {
+
+                db.rollback();
+                return Result.PRIVILEGE;
+
+            }
+
+            if (currentOrder.orderStatus() != OrderStatus.PAID) {
+
+                db.rollback();
+                return Result.FAILED;
+
+            }
+
+            OrderDAO.updateOrderStatus(orderId, OrderStatus.CANCELED);
+
+            List<ItemDAO> orderItems = ItemDAO.findByOrderId(orderId);
+            for (ItemDAO itemDAO : orderItems) {
+                ProductDAO product = ProductDAO.findBySku(itemDAO.sku());
+                if (product != null) {
+                    int newStock = product.quantity() + itemDAO.quantity();
+                    Result stockUpdate = ProductDAO.updateStock(itemDAO.sku(), newStock, db.getConnection());
+                    if (stockUpdate != Result.SUCCESS) {
+                        db.rollback();
+                        return Result.FAILED;
+                    }
+                }
+            }
+
+            db.commit();
+            return Result.SUCCESS;
+
+
+        } catch (DataAccessException e) {
 
             System.err.println("Error canceling order: " + e.getMessage());
             return Result.FAILED;
@@ -182,28 +182,25 @@ public class OrderService {
             return Result.FAILED;
         }
 
-        try (Connection conn = DBManager.getConnection()) {
-            conn.setAutoCommit(false);
-            try {
-                OrderDAO currentOrder = OrderDAO.findById(orderId);
-                if (currentOrder == null) {
-                    conn.rollback();
-                    return Result.FAILED;
-                }
-                if (currentOrder.orderStatus() == OrderStatus.CANCELED) {
-                    conn.rollback();
-                    return Result.FAILED;
-                }
+        try (DBManager db = DBManager.open()) {
+            db.startTransaction();
 
-                OrderDAO.updateOrderStatus(orderId, newStatus);
-
-                conn.commit();
-                return Result.SUCCESS;
-            } catch (Exception e) {
-                conn.rollback();
+            OrderDAO currentOrder = OrderDAO.findById(orderId);
+            if (currentOrder == null) {
+                db.rollback();
                 return Result.FAILED;
             }
-        } catch (SQLException e) {
+            if (currentOrder.orderStatus() == OrderStatus.CANCELED) {
+                db.rollback();
+                return Result.FAILED;
+            }
+
+            OrderDAO.updateOrderStatus(orderId, newStatus);
+
+            db.commit();
+            return Result.SUCCESS;
+
+        } catch (DataAccessException e) {
             System.err.println("Error Updating order status: " + e.getMessage());
             return Result.FAILED;
         }
@@ -217,30 +214,25 @@ public class OrderService {
      * @param userType if the user is actually a customer or not.
      * @return the order if successful, otherwise null.
      */
-    public static Order getOrderById(UUID orderId, UUID userId, UserType userType) {
-        if (orderId == null || userId == null) {
+    public static OrderInfo getOrderById(UUID orderId, UUID userId, UserType userType) {
+        if (orderId == null || userId == null)
             return null;
-        }
-
         try {
             OrderDAO orderDao = OrderDAO.findById(orderId);
-            if (orderDao == null) {
-                return null;
-            }
+            if (orderDao == null) return null;
 
-            //ownership check
-            if (UserType.CUSTOMER.equals(userType) && !orderDao.userId().equals(userId)) {
+            // ownership check
+            if (UserType.CUSTOMER.equals(userType) && !orderDao.userId().equals(userId))
                 return null;
-            }
-            if (!UserType.CUSTOMER.equals(userType) && !UserType.ADMIN.equals(userType) && !UserType.WAREHOUSEWORKER.equals(userType)) {
+            if (!UserType.CUSTOMER.equals(userType) && !UserType.ADMIN.equals(userType) && !UserType.WAREHOUSEWORKER.equals(userType))
                 return null;
-            }
 
             List<Item> items = ItemDAO.findItemsWithProductDetails(orderDao.orderId());
+            Order order = new Order(orderDao.orderId(), orderDao.userId(), items,
+                    orderDao.dateOfPurchase().atStartOfDay(), orderDao.orderStatus()
+            );
 
-            return new Order(orderDao.orderId(), orderDao.userId(), items,
-                    orderDao.dateOfPurchase().atStartOfDay(), orderDao.orderStatus());
-
+            return toOrderInfo(order);
         } catch (Exception e) {
             System.err.println("Error getting order by ID: " + e.getMessage());
             return null;
@@ -254,27 +246,20 @@ public class OrderService {
      * @param userType   if the user is actually a customer or not.
      * @return the list of orders if successful, otherwise empty list.
      */
-    public static List<Order> getCustomerOrders(UUID customerId, UserType userType) {
-
-        if (!UserType.CUSTOMER.equals(userType) && !UserType.ADMIN.equals(userType)) {
-            return new ArrayList<>();
-        }
-        if (customerId == null) {
-            return new ArrayList<>();
-        }
+    public static List<OrderInfo> getCustomerOrders(UUID customerId, UserType userType) {
+        if (!UserType.CUSTOMER.equals(userType) && !UserType.ADMIN.equals(userType)) return new ArrayList<>();
+        if (customerId == null) return new ArrayList<>();
 
         try {
             List<OrderDAO> orderDaos = OrderDAO.findByUserId(customerId);
-            List<Order> orders = new ArrayList<>();
-
+            List<OrderInfo> orders = new ArrayList<>();
             for (OrderDAO orderDao : orderDaos) {
                 List<Item> items = ItemDAO.findItemsWithProductDetails(orderDao.orderId());
-                orders.add(new Order(orderDao.orderId(), orderDao.userId(), items,
-                        orderDao.dateOfPurchase().atStartOfDay(), orderDao.orderStatus()));
+                Order order = new Order(orderDao.orderId(), orderDao.userId(), items, orderDao.dateOfPurchase().atStartOfDay(),
+                        orderDao.orderStatus());
+                orders.add(toOrderInfo(order));
             }
-
             return orders;
-
         } catch (Exception e) {
             System.err.println("Error getting customer orders history: " + e.getMessage());
             return new ArrayList<>();
@@ -332,5 +317,15 @@ public class OrderService {
             System.err.println("Error counting order items: " + e.getMessage());
             return 0;
         }
+    }
+
+    public static List<OrderInfo> findAll() {
+
+        List<OrderDAO> foundOrders = OrderDAO.findAll();
+        return foundOrders.stream()
+                .map(OrderDAO::toDomainModel)
+                .map(OrderService::toOrderInfo)
+                .collect(Collectors.toList());
+
     }
 }

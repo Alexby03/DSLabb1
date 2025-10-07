@@ -47,7 +47,7 @@
         <c:remove var="errorMessage" scope="session"/>
     </c:if>
 
-    <h2>Order #${order.orderId.toString().substring(0, 8)}</h2>
+    <h2>Order #${order.orderId().toString().substring(0, 8)}</h2>
 
     <div class="info-section">
         <h3>Leveransinformation</h3>
@@ -58,10 +58,10 @@
 
     <div class="info-section">
         <h3>Orderinformation</h3>
-        <div class="info-row"><strong>Order ID:</strong> ${order.orderId}</div>
-        <div class="info-row"><strong>Datum:</strong> ${order.dateOfPurchase.toString().substring(0, 10)}</div>
-        <div class="info-row"><strong>Status:</strong> ${order.orderStatus}</div>
-        <div class="info-row"><strong>Totalt belopp:</strong> ${order.totalAmount} kr</div>
+        <div class="info-row"><strong>Order ID:</strong> ${order.orderId()}</div>
+        <div class="info-row"><strong>Datum:</strong> ${order.dateOfPurchase().toString().substring(0, 10)}</div>
+        <div class="info-row"><strong>Status:</strong> ${order.orderStatus()}</div>
+        <div class="info-row"><strong>Totalt belopp:</strong> ${order.totalAmount()} kr</div>
     </div>
 
     <h3>Produkter att plocka</h3>
@@ -76,9 +76,9 @@
         <tbody>
         <c:forEach var="item" items="${orderItems}">
             <tr>
-                <td>${item.sku}</td>
-                <td>${item.productName}</td>
-                <td><strong>${item.quantity}</strong></td>
+                <td>${item.sku()}</td>
+                <td>${item.productName()}</td>
+                <td><strong>${item.quantity()}</strong></td>
             </tr>
         </c:forEach>
         </tbody>
@@ -87,15 +87,15 @@
     <c:if test="${canAdvance}">
         <form method="post" action="${pageContext.request.contextPath}/warehouse/orders">
             <input type="hidden" name="action" value="advanceStatus"/>
-            <input type="hidden" name="orderId" value="${order.orderId}"/>
+            <input type="hidden" name="orderId" value="${order.orderId()}"/>
 
             <c:choose>
-                <c:when test="${order.orderStatus == 'PAID'}">
+                <c:when test="${order.orderStatus() == 'PAID'}">
                     <button type="submit" onclick="return confirm('Markera order som skickad?')">
                         Markera som SKICKAD
                     </button>
                 </c:when>
-                <c:when test="${order.orderStatus == 'SHIPPED'}">
+                <c:when test="${order.orderStatus() == 'SHIPPED'}">
                     <button type="submit" onclick="return confirm('Markera order som levererad?')">
                         Markera som LEVERERAD
                     </button>

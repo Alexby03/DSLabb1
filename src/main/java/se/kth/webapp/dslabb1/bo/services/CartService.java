@@ -2,21 +2,32 @@ package se.kth.webapp.dslabb1.bo.services;
 
 import se.kth.webapp.dslabb1.bo.models.Cart;
 import se.kth.webapp.dslabb1.bo.models.CartItem;
+import se.kth.webapp.dslabb1.db.DataAccessException;
+import se.kth.webapp.dslabb1.ui.info.CartInfo;
+import se.kth.webapp.dslabb1.ui.info.CartItemInfo;
 import se.kth.webapp.dslabb1.bo.models.enums.Result;
 import se.kth.webapp.dslabb1.bo.models.enums.UserType;
 import se.kth.webapp.dslabb1.db.DBManager;
 import se.kth.webapp.dslabb1.db.data.CartDAO;
 import se.kth.webapp.dslabb1.db.data.ProductDAO;
-
-import java.sql.Connection;
-import java.sql.SQLException;
+import java.util.ArrayList;
 import java.util.List;
 import java.util.UUID;
+import java.util.stream.Collectors;
 
 /**
  * Service class providing methods for handling carts to the presentation layer.
  */
 public class CartService {
+
+    public static CartItemInfo toCartItemInfo(CartItem cartItem) {
+        return new CartItemInfo(cartItem.getSku(), cartItem.getProductName(), cartItem.getPrice(), cartItem.getQuantity());
+    }
+
+    public static CartInfo toCartInfo(Cart cart) {
+        List<CartItemInfo> itemInfoList = cart.items().stream().map(CartService::toCartItemInfo).collect(Collectors.toList());
+        return new CartInfo(cart.customerId(), itemInfoList);
+    }
 
     /**
      * Adds an item to a customer's cart.
@@ -111,7 +122,7 @@ public class CartService {
      * @param userId   id of the customer owning the cart.
      * @param userType if the user actually is a customer.
      * @return whether clearing the cart was successful or not.
-     * @throws SQLException when an error occurs on the database side.
+     * @throws DataAccessException when an error occurs on the database side.
      */
     public static Result clearCart(UUID userId, UserType userType) {
         if (!UserType.CUSTOMER.equals(userType)) return Result.PRIVILEGE;
@@ -120,9 +131,9 @@ public class CartService {
             return Result.FAILED;
         }
 
-        try (Connection conn = DBManager.getConnection()) {
-            return CartDAO.clearCart(userId, conn);
-        } catch (SQLException e) {
+        try (DBManager db = DBManager.open()) {
+            return CartDAO.clearCart(userId, db.getConnection());
+        } catch (DataAccessException e) {
             System.err.println("Error clearing cart: " + e.getMessage());
             return Result.FAILED;
         }
@@ -135,17 +146,13 @@ public class CartService {
      * @param userType if the user actually is a customer.
      * @return the cart for the given user,
      */
-    public static Cart getUserCart(UUID userId, UserType userType) {
-        if (!UserType.CUSTOMER.equals(userType) && !UserType.ADMIN.equals(userType)) {
+    public static CartInfo getUserCart(UUID userId, UserType userType) {
+        if (!UserType.CUSTOMER.equals(userType) && !UserType.ADMIN.equals(userType))
             return null;
-        }
-
-        if (userId == null) {
-            return null;
-        }
-
+        if (userId == null) return null;
         try {
-            return CartDAO.getCartForUser(userId);
+            Cart cart = CartDAO.getCartForUser(userId);
+            return toCartInfo(cart);
         } catch (Exception e) {
             System.err.println("Error getting user cart: " + e.getMessage());
             return null;
@@ -160,7 +167,7 @@ public class CartService {
      * @return the total cost of the items within the cart.
      */
     public static double getCartTotal(UUID userId, UserType userType) {
-        Cart cart = getUserCart(userId, userType);
+        Cart cart = getUserCartHelper(userId, userType);
         if (cart == null) {
             return 0.0;
         }
@@ -187,7 +194,7 @@ public class CartService {
      * @return amount of items in cart currently
      */
     public static int getCartItemCount(UUID userId, UserType userType) {
-        Cart cart = getUserCart(userId, userType);
+        Cart cart = getUserCartHelper(userId, userType);
         if (cart == null) {
             return 0;
         }
@@ -213,11 +220,16 @@ public class CartService {
      * @param sku    id of product
      * @return the cartItem, else null if such item does not exist in cart
      */
-    public static CartItem getCartItem(UUID userId, String sku) {
-        if (userId == null || sku == null || sku.isBlank()) {
+    public static CartItemInfo getCartItem(UUID userId, String sku) {
+        if (userId == null || sku == null || sku.isBlank())
+            return null;
+        try {
+            CartItem cartItem = CartDAO.findCartItemBySKU(userId, sku);
+            return toCartItemInfo(cartItem);
+        } catch (Exception e) {
+            System.err.println("Error getting cart item: " + e.getMessage());
             return null;
         }
-        return CartDAO.findCartItemBySKU(userId, sku);
     }
 
     /**
@@ -227,9 +239,30 @@ public class CartService {
      * @param userType if the user actually is a customer.
      * @return a list of cartItem instances representing the cart items.
      */
-    public static List<CartItem> getAllItems(UUID userId, UserType userType) {
-        if (!UserType.CUSTOMER.equals(userType)) return null;
-        return CartDAO.getCartForUser(userId).items();
+    public static List<CartItemInfo> getAllItems(UUID userId, UserType userType) {
+        if (!UserType.CUSTOMER.equals(userType))
+            return new ArrayList<>();
+        try {
+            Cart cart = CartDAO.getCartForUser(userId);
+            return cart.items().stream()
+                    .map(CartService::toCartItemInfo)
+                    .collect(Collectors.toList());
+        } catch (Exception e) {
+            System.err.println("Error getting all cart items: " + e.getMessage());
+            return new ArrayList<>();
+        }
+    }
+
+    private static Cart getUserCartHelper(UUID userId, UserType userType) {
+        if (!UserType.CUSTOMER.equals(userType) && !UserType.ADMIN.equals(userType))
+            return null;
+        if (userId == null) return null;
+        try {
+            return CartDAO.getCartForUser(userId);
+        } catch (Exception e) {
+            System.err.println("Error getting user cart: " + e.getMessage());
+            return null;
+        }
     }
 
 }

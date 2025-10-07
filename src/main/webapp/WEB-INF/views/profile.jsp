@@ -44,17 +44,17 @@
         <h2>Redigera Profil</h2>
 
         <label for="email">E-post</label>
-        <input type="email" id="email" name="email" value="${sessionScope.CUSTOMER.email}" required/>
+        <input type="email" id="email" name="email" value="${sessionScope.CUSTOMER.email()}" required/>
 
         <label for="fullName">Fullständigt namn</label>
-        <input type="text" id="fullName" name="fullName" value="${sessionScope.CUSTOMER.fullName}" required/>
+        <input type="text" id="fullName" name="fullName" value="${sessionScope.CUSTOMER.fullName()}" required/>
 
         <label for="address">Adress</label>
-        <input type="text" id="address" name="address" value="${sessionScope.CUSTOMER.address}"/>
+        <input type="text" id="address" name="address" value="${sessionScope.CUSTOMER.address()}"/>
 
         <label for="paymentMethod">Betalningsmetod</label>
         <input type="text" id="paymentMethod" name="paymentMethod"
-               value="${sessionScope.CUSTOMER.paymentMethod}"/>
+               value="${sessionScope.CUSTOMER.paymentMethod()}"/>
 
 
         <button type="submit">Uppdatera Profil</button>

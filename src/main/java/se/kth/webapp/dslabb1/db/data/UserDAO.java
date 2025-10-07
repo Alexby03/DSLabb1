@@ -8,7 +8,6 @@ import se.kth.webapp.dslabb1.bo.models.enums.Result;
 import se.kth.webapp.dslabb1.bo.models.enums.UserType;
 import se.kth.webapp.dslabb1.db.DBManager;
 
-import java.sql.Connection;
 import java.sql.PreparedStatement;
 import java.sql.ResultSet;
 import java.sql.SQLException;
@@ -40,8 +39,8 @@ public record UserDAO(
         String sql = "INSERT INTO T_User (userId, email, userPassword, address, fullName, paymentMethod, userType, isActive) VALUES (?, ?, ?, ?, ?, ?, ?, ?)";
 
         UserDAO userDao = fromDomainModel(user, userPassword);
-        try (Connection conn = DBManager.getConnection();
-             PreparedStatement stmt = conn.prepareStatement(sql)) {
+        try (DBManager db = DBManager.open();
+             PreparedStatement stmt = db.getConnection().prepareStatement(sql)) {
 
             stmt.setString(1, userDao.userId.toString());
             stmt.setString(2, userDao.email);
@@ -69,8 +68,8 @@ public record UserDAO(
     public static UserDAO findById(UUID userId) {
         String sql = "SELECT * FROM T_User WHERE userId = ?";
 
-        try (Connection conn = DBManager.getConnection();
-             PreparedStatement stmt = conn.prepareStatement(sql)) {
+        try (DBManager db = DBManager.open();
+             PreparedStatement stmt = db.getConnection().prepareStatement(sql)) {
 
             stmt.setString(1, userId.toString());
 
@@ -104,8 +103,8 @@ public record UserDAO(
     public static UserDAO findByEmail(String email) {
         String sql = "SELECT * FROM T_User WHERE email = ?";
 
-        try (Connection conn = DBManager.getConnection();
-             PreparedStatement stmt = conn.prepareStatement(sql)) {
+        try (DBManager db = DBManager.open();
+             PreparedStatement stmt = db.getConnection().prepareStatement(sql)) {
 
             stmt.setString(1, email);
 
@@ -139,8 +138,8 @@ public record UserDAO(
         List<UserDAO> users = new ArrayList<>();
         String sql = "SELECT * FROM T_User";
 
-        try (Connection conn = DBManager.getConnection();
-             PreparedStatement stmt = conn.prepareStatement(sql);
+        try (DBManager db = DBManager.open();
+             PreparedStatement stmt = db.getConnection().prepareStatement(sql);
              ResultSet rs = stmt.executeQuery()) {
 
             while (rs.next()) {
@@ -173,8 +172,8 @@ public record UserDAO(
     public static Result updateUser(IUser user, String userPassword) {
         String sql = "UPDATE T_User SET email = ?, userPassword = ?, address = ?, fullName = ?, paymentMethod = ? WHERE userId = ?";
 
-        try (Connection conn = DBManager.getConnection();
-             PreparedStatement stmt = conn.prepareStatement(sql)) {
+        try (DBManager db = DBManager.open();
+             PreparedStatement stmt = db.getConnection().prepareStatement(sql)) {
 
             UserDAO userDao = fromDomainModel(user, userPassword);
 
@@ -202,8 +201,8 @@ public record UserDAO(
     public static Result deactivateUser(UUID userId) {
         String sql = "UPDATE T_User SET isActive = FALSE WHERE userId = ?";
 
-        try (Connection conn = DBManager.getConnection();
-             PreparedStatement stmt = conn.prepareStatement(sql)) {
+        try (DBManager db = DBManager.open();
+             PreparedStatement stmt = db.getConnection().prepareStatement(sql)) {
 
             stmt.setString(1, userId.toString());
 

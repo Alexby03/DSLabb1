@@ -50,7 +50,7 @@
         <c:remove var="errorMessage" scope="session"/>
     </c:if>
 
-    <h2>Order #${order.orderId.toString().substring(0, 8)}</h2>
+    <h2>Order #${order.orderId().toString().substring(0, 8)}</h2>
 
     <div class="info-section">
         <h3>Kundinformation</h3>
@@ -61,10 +61,10 @@
 
     <div class="info-section">
         <h3>Orderinformation</h3>
-        <div class="info-row"><strong>Order ID:</strong> ${order.orderId}</div>
-        <div class="info-row"><strong>Datum:</strong> ${order.dateOfPurchase.toString().substring(0, 10)}</div>
-        <div class="info-row"><strong>Status:</strong> ${order.orderStatus}</div>
-        <div class="info-row"><strong>Totalt belopp:</strong> ${order.totalAmount} kr</div>
+        <div class="info-row"><strong>Order ID:</strong> ${order.orderId()}</div>
+        <div class="info-row"><strong>Datum:</strong> ${order.dateOfPurchase().toString().substring(0, 10)}</div>
+        <div class="info-row"><strong>Status:</strong> ${order.orderStatus()}</div>
+        <div class="info-row"><strong>Totalt belopp:</strong> ${order.totalAmount()} kr</div>
     </div>
 
     <h3>Produkter i ordern</h3>
@@ -81,26 +81,26 @@
         <tbody>
         <c:forEach var="item" items="${orderItems}">
             <tr>
-                <td>${item.sku}</td>
-                <td>${item.productName}</td>
-                <td>${item.unitPrice} kr</td>
-                <td>${item.quantity}</td>
-                <td>${item.subtotal()} kr</td>
+                <td>${item.sku()}</td>
+                <td>${item.productName()}</td>
+                <td>${item.unitPrice()} kr</td>
+                <td>${item.quantity()}</td>
+                <td>${item.getSubtotal()} kr</td>
             </tr>
         </c:forEach>
         </tbody>
     </table>
 
-    <c:if test="${order.orderStatus != 'CANCELED' && order.orderStatus != 'DELIVERED'}">
+    <c:if test="${order.orderStatus() != 'CANCELED' && order.orderStatus() != 'DELIVERED'}">
         <h3>Hantera Order</h3>
         <form method="post" action="${pageContext.request.contextPath}/admin/orders" style="display: inline;">
             <input type="hidden" name="action" value="updateStatus"/>
-            <input type="hidden" name="orderId" value="${order.orderId}"/>
+            <input type="hidden" name="orderId" value="${order.orderId()}"/>
 
             <select name="newStatus" required>
                 <option value="">Välj ny status</option>
                 <c:forEach var="status" items="${orderStatuses}">
-                    <c:if test="${status != order.orderStatus}">
+                    <c:if test="${status != order.orderStatus()}">
                         <option value="${status}">${status}</option>
                     </c:if>
                 </c:forEach>
@@ -109,10 +109,10 @@
             <button type="submit">Uppdatera Status</button>
         </form>
 
-        <c:if test="${order.orderStatus == 'PAID'}">
+        <c:if test="${order.orderStatus() == 'PAID'}">
             <form method="post" action="${pageContext.request.contextPath}/admin/orders" style="display: inline;">
                 <input type="hidden" name="action" value="cancelOrder"/>
-                <input type="hidden" name="orderId" value="${order.orderId}"/>
+                <input type="hidden" name="orderId" value="${order.orderId()}"/>
                 <button type="submit" class="btn-danger" onclick="return confirm('Är du säker på att du vill avbryta denna order?')">
                     Avbryt Order
                 </button>

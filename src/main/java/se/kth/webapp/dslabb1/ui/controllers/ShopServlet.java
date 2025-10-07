@@ -7,13 +7,13 @@ import jakarta.servlet.http.HttpServlet;
 import jakarta.servlet.http.HttpServletRequest;
 import jakarta.servlet.http.HttpServletResponse;
 import jakarta.servlet.http.HttpSession;
-import se.kth.webapp.dslabb1.bo.models.CartItem;
-import se.kth.webapp.dslabb1.bo.models.Customer;
-import se.kth.webapp.dslabb1.bo.models.Product;
 import se.kth.webapp.dslabb1.bo.models.enums.Category;
 import se.kth.webapp.dslabb1.bo.models.enums.Result;
 import se.kth.webapp.dslabb1.bo.services.CartService;
 import se.kth.webapp.dslabb1.bo.services.ProductService;
+import se.kth.webapp.dslabb1.ui.info.CartItemInfo;
+import se.kth.webapp.dslabb1.ui.info.ProductInfo;
+import se.kth.webapp.dslabb1.ui.info.UserInfo;
 
 import java.io.IOException;
 import java.util.List;
@@ -36,14 +36,14 @@ public class ShopServlet extends HttpServlet {
             }
         }
 
-        List<Product> products = ProductService.findProductByCategoryAndName(searchText, selected);
+        List<ProductInfo> products = ProductService.findProductByCategoryAndName(searchText, selected);
 
         HttpSession session = request.getSession();
-        Customer customer = (Customer) session.getAttribute("CUSTOMER");
+        UserInfo customer = (UserInfo) session.getAttribute("CUSTOMER");
         int cartItemCount = 0;
 
         if (customer != null) {
-            cartItemCount = CartService.getCartItemCount(customer.getId(), customer.getUserType());
+            cartItemCount = CartService.getCartItemCount(customer.userId(), customer.userType());
         }
 
         String errorMessage = request.getParameter("error");
@@ -67,7 +67,7 @@ public class ShopServlet extends HttpServlet {
             throws IOException {
 
         HttpSession session = req.getSession();
-        Customer customer = (Customer) session.getAttribute("CUSTOMER");
+        UserInfo customer = (UserInfo) session.getAttribute("CUSTOMER");
 
         if (customer == null) {
             resp.sendRedirect(req.getContextPath() + "/logout");
@@ -83,9 +83,9 @@ public class ShopServlet extends HttpServlet {
             try {
 
                 int quantity = Integer.parseInt(quantityStr);
-                CartItem existing = CartService.getCartItem(customer.getId(), sku);
-                int existingQty = (existing == null) ? 0 : existing.getQuantity();
-                int stock = ProductService.findProductBySKU(sku).getQuantity();
+                CartItemInfo existing = CartService.getCartItem(customer.userId(), sku);
+                int existingQty = (existing == null) ? 0 : existing.quantity();
+                int stock = ProductService.findProductBySKU(sku).quantity();
 
                 if (quantity + existingQty > stock) {
                     req.getSession().setAttribute("errorMessage", "Max antal produkter.");
@@ -94,7 +94,7 @@ public class ShopServlet extends HttpServlet {
                     return;
                 } else {
                     Result result = CartService.addItemToCart(
-                            customer.getId(), sku, quantity, customer.getUserType());
+                            customer.userId(), sku, quantity, customer.userType());
 
                     if (result == Result.SUCCESS) {
                         req.setAttribute("successMessage", "Produkt tillagd i kundvagnen!");
@@ -109,7 +109,6 @@ public class ShopServlet extends HttpServlet {
                 req.setAttribute("errorMessage", "Ogiltigt antal.");
             }
         }
-
         resp.sendRedirect(req.getContextPath() + "/shop");
     }
 }

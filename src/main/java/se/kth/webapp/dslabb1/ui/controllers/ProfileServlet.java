@@ -7,9 +7,9 @@ import jakarta.servlet.http.HttpServlet;
 import jakarta.servlet.http.HttpServletRequest;
 import jakarta.servlet.http.HttpServletResponse;
 import jakarta.servlet.http.HttpSession;
-import se.kth.webapp.dslabb1.bo.models.Customer;
 import se.kth.webapp.dslabb1.bo.models.enums.Result;
 import se.kth.webapp.dslabb1.bo.services.UserService;
+import se.kth.webapp.dslabb1.ui.info.UserInfo;
 
 import java.io.IOException;
 
@@ -21,7 +21,7 @@ public class ProfileServlet extends HttpServlet {
             throws ServletException, IOException {
 
         HttpSession session = request.getSession();
-        Customer customer = (Customer) session.getAttribute("CUSTOMER");
+        UserInfo customer = (UserInfo) session.getAttribute("CUSTOMER");
 
         if (customer == null) {
             response.sendRedirect(request.getContextPath() + "/logout");
@@ -37,7 +37,7 @@ public class ProfileServlet extends HttpServlet {
             throws ServletException, IOException {
 
         HttpSession session = request.getSession();
-        Customer customer = (Customer) session.getAttribute("CUSTOMER");
+        UserInfo customer = (UserInfo) session.getAttribute("CUSTOMER");
 
         if (customer == null) {
             response.sendRedirect(request.getContextPath() + "/logout");
@@ -60,13 +60,14 @@ public class ProfileServlet extends HttpServlet {
 
         if (result == Result.SUCCESS) {
 
-            Customer updatedCustomer = new Customer(
-                    customer.getId(),
+            UserInfo updatedCustomer = new UserInfo(
+                    customer.userId(),
                     newEmail,
-                    newAddress,
                     newFullName,
-                    newPaymentMethod,
-                    customer.isActive()
+                    customer.userType(),
+                    customer.isActive(),
+                    newAddress,
+                    newPaymentMethod
             );
             session.setAttribute("CUSTOMER", updatedCustomer);
             request.setAttribute("successMessage", "Din profil har uppdaterats");

@@ -7,7 +7,7 @@ import jakarta.servlet.http.HttpServlet;
 import jakarta.servlet.http.HttpServletRequest;
 import jakarta.servlet.http.HttpServletResponse;
 import jakarta.servlet.http.HttpSession;
-import se.kth.webapp.dslabb1.bo.models.Admin;
+import se.kth.webapp.dslabb1.ui.info.UserInfo;
 
 import java.io.IOException;
 
@@ -24,7 +24,7 @@ public class AdminDashboardServlet extends HttpServlet {
             return;
         }
 
-        Admin admin = (Admin) session.getAttribute("ADMIN");
+        UserInfo admin = (UserInfo) session.getAttribute("ADMIN");
         request.setAttribute("admin", admin);
 
         RequestDispatcher rd = request.getRequestDispatcher("/WEB-INF/views/admin/dashboard.jsp");

@@ -7,13 +7,12 @@ import jakarta.servlet.http.HttpServlet;
 import jakarta.servlet.http.HttpServletRequest;
 import jakarta.servlet.http.HttpServletResponse;
 import jakarta.servlet.http.HttpSession;
-import se.kth.webapp.dslabb1.bo.models.Admin;
-import se.kth.webapp.dslabb1.bo.models.Order;
 import se.kth.webapp.dslabb1.bo.models.enums.OrderStatus;
 import se.kth.webapp.dslabb1.bo.models.enums.Result;
 import se.kth.webapp.dslabb1.bo.services.OrderService;
-import se.kth.webapp.dslabb1.db.data.OrderDAO;
-import se.kth.webapp.dslabb1.db.data.UserDAO;
+import se.kth.webapp.dslabb1.bo.services.UserService;
+import se.kth.webapp.dslabb1.ui.info.OrderInfo;
+import se.kth.webapp.dslabb1.ui.info.UserInfo;
 
 import java.io.IOException;
 import java.util.List;
@@ -32,7 +31,7 @@ public class AdminOrderServlet extends HttpServlet {
             return;
         }
 
-        Admin admin = (Admin) session.getAttribute("ADMIN");
+        UserInfo admin = (UserInfo) session.getAttribute("ADMIN");
         String orderIdParam = request.getParameter("orderId");
 
         if (orderIdParam != null && !orderIdParam.trim().isEmpty()) {
@@ -42,10 +41,10 @@ public class AdminOrderServlet extends HttpServlet {
         }
     }
 
-    private void showAllOrders(HttpServletRequest request, HttpServletResponse response, Admin admin)
+    private void showAllOrders(HttpServletRequest request, HttpServletResponse response, UserInfo admin)
             throws ServletException, IOException {
 
-        List<OrderDAO> allOrders = OrderDAO.findAll();
+        List<OrderInfo> allOrders = OrderService.findAll();
 
         request.setAttribute("admin", admin);
         request.setAttribute("orders", allOrders);
@@ -56,12 +55,12 @@ public class AdminOrderServlet extends HttpServlet {
     }
 
     private void showOrderDetails(HttpServletRequest request, HttpServletResponse response,
-                                  Admin admin, String orderIdParam)
+                                  UserInfo admin, String orderIdParam)
             throws ServletException, IOException {
 
         try {
             UUID orderId = UUID.fromString(orderIdParam);
-            Order order = OrderService.getOrderById(orderId, admin.getId(), admin.getUserType());
+            OrderInfo order = OrderService.getOrderById(orderId, admin.userId(), admin.userType());
 
             if (order == null) {
                 request.setAttribute("errorMessage", "Beställning hittades inte.");
@@ -70,11 +69,11 @@ public class AdminOrderServlet extends HttpServlet {
             }
 
             // Fetch customer information
-            UserDAO customer = UserDAO.findById(order.getCustomerId());
+            UserInfo customer = UserService.findById(order.customerId());
 
             request.setAttribute("admin", admin);
             request.setAttribute("order", order);
-            request.setAttribute("orderItems", order.getItems());
+            request.setAttribute("orderItems", order.items());
             request.setAttribute("orderStatuses", OrderStatus.values());
 
             if(customer != null) {
@@ -82,9 +81,6 @@ public class AdminOrderServlet extends HttpServlet {
                 request.setAttribute("customerEmail", customer.email());
                 request.setAttribute("customerAddress", customer.address());
             }
-            request.setAttribute("customerName", customer.fullName());
-            request.setAttribute("customerEmail", customer.email());
-            request.setAttribute("customerAddress", customer.address());
 
             RequestDispatcher rd = request.getRequestDispatcher("/WEB-INF/views/admin/orderDetails.jsp");
             rd.forward(request, response);
@@ -105,7 +101,7 @@ public class AdminOrderServlet extends HttpServlet {
             return;
         }
 
-        Admin admin = (Admin) session.getAttribute("ADMIN");
+        UserInfo admin = (UserInfo) session.getAttribute("ADMIN");
         String action = request.getParameter("action");
         String orderIdParam = request.getParameter("orderId");
 
@@ -118,13 +114,13 @@ public class AdminOrderServlet extends HttpServlet {
         response.sendRedirect(request.getContextPath() + "/admin/orders?orderId=" + orderIdParam);
     }
 
-    private void updateOrderStatus(HttpServletRequest request, Admin admin, String orderIdParam) {
+    private void updateOrderStatus(HttpServletRequest request, UserInfo admin, String orderIdParam) {
         try {
             UUID orderId = UUID.fromString(orderIdParam);
             String newStatusStr = request.getParameter("newStatus");
             OrderStatus newStatus = OrderStatus.valueOf(newStatusStr);
 
-            Result result = OrderService.updateOrderStatus(orderId, newStatus, admin.getUserType());
+            Result result = OrderService.updateOrderStatus(orderId, newStatus, admin.userType());
 
             if (result == Result.SUCCESS) {
                 request.getSession().setAttribute("successMessage", "Orderstatus uppdaterad.");
@@ -136,10 +132,10 @@ public class AdminOrderServlet extends HttpServlet {
         }
     }
 
-    private void cancelOrder(HttpServletRequest request, Admin admin, String orderIdParam) {
+    private void cancelOrder(HttpServletRequest request, UserInfo admin, String orderIdParam) {
         try {
             UUID orderId = UUID.fromString(orderIdParam);
-            Result result = OrderService.cancelOrder(admin.getId(), orderId, admin.getUserType());
+            Result result = OrderService.cancelOrder(admin.userId(), orderId, admin.userType());
 
             if (result == Result.SUCCESS) {
                 request.getSession().setAttribute("successMessage", "Order Cancelled.");

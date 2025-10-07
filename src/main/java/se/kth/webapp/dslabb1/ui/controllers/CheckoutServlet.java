@@ -7,12 +7,12 @@ import jakarta.servlet.http.HttpServlet;
 import jakarta.servlet.http.HttpServletRequest;
 import jakarta.servlet.http.HttpServletResponse;
 import jakarta.servlet.http.HttpSession;
-import se.kth.webapp.dslabb1.bo.models.Cart;
-import se.kth.webapp.dslabb1.bo.models.CartItem;
-import se.kth.webapp.dslabb1.bo.models.Customer;
 import se.kth.webapp.dslabb1.bo.models.enums.Result;
 import se.kth.webapp.dslabb1.bo.services.CartService;
 import se.kth.webapp.dslabb1.bo.services.OrderService;
+import se.kth.webapp.dslabb1.ui.info.CartInfo;
+import se.kth.webapp.dslabb1.ui.info.CartItemInfo;
+import se.kth.webapp.dslabb1.ui.info.UserInfo;
 
 import java.io.IOException;
 import java.util.List;
@@ -20,16 +20,16 @@ import java.util.List;
 @WebServlet(name = "checkoutServlet", value = "/checkout")
 public class CheckoutServlet extends HttpServlet {
 
-    private void loadCheckoutData(HttpServletRequest request, Customer customer) {
-        Cart userCart = CartService.getUserCart(customer.getId(), customer.getUserType());
-        List<CartItem> cartItems = (userCart != null) ? userCart.items() : List.of();
-        double cartTotal = CartService.getCartTotal(customer.getId(), customer.getUserType());
-        int cartItemCount = CartService.getCartItemCount(customer.getId(), customer.getUserType());
+    private void loadCheckoutData(HttpServletRequest request, UserInfo customer) {
+        CartInfo userCart = CartService.getUserCart(customer.userId(), customer.userType());
+        List<CartItemInfo> cartItems = (userCart != null) ? userCart.items() : List.of();
+        double cartTotal = CartService.getCartTotal(customer.userId(), customer.userType());
+        int cartItemCount = CartService.getCartItemCount(customer.userId(), customer.userType());
 
-        request.setAttribute("email", customer.getEmail());
-        request.setAttribute("name", customer.getFullName());
-        request.setAttribute("address", customer.getAddress());
-        request.setAttribute("paymentMethod", customer.getPaymentMethod());
+        request.setAttribute("email", customer.email());
+        request.setAttribute("name", customer.fullName());
+        request.setAttribute("address", customer.address());
+        request.setAttribute("paymentMethod", customer.paymentMethod());
         request.setAttribute("cartItems", cartItems);
         request.setAttribute("cartTotal", cartTotal);
         request.setAttribute("cartItemCount", cartItemCount);
@@ -41,7 +41,7 @@ public class CheckoutServlet extends HttpServlet {
             throws ServletException, IOException {
 
         HttpSession session = request.getSession();
-        Customer customer = (Customer) session.getAttribute("CUSTOMER");
+        UserInfo customer = (UserInfo) session.getAttribute("CUSTOMER");
 
         if (customer == null) {
             response.sendRedirect(request.getContextPath() + "/logout");
@@ -59,7 +59,7 @@ public class CheckoutServlet extends HttpServlet {
             throws IOException {
 
         HttpSession session = request.getSession();
-        Customer customer = (Customer) session.getAttribute("CUSTOMER");
+        UserInfo customer = (UserInfo) session.getAttribute("CUSTOMER");
 
         if (customer == null) {
             response.sendRedirect(request.getContextPath() + "/logout");
@@ -74,7 +74,6 @@ public class CheckoutServlet extends HttpServlet {
                 case "order" -> {
 
                     String selectedMethod = request.getParameter("paymentMethodSlot");
-
                     if (selectedMethod == null || selectedMethod.trim().isEmpty()) {
                         request.setAttribute("errorMessage", "Välj en betalningsmetod.");
                         loadCheckoutData(request, customer);
@@ -82,16 +81,16 @@ public class CheckoutServlet extends HttpServlet {
                         return;
                     }
 
-                    Cart checkoutCart = CartService.getUserCart(customer.getId(), customer.getUserType());
-                    Result result = OrderService.createOrderFromCart(customer.getId(), checkoutCart);
+                    Result result = OrderService.createOrderFromCart(customer.userId());
 
                     if (result == Result.SUCCESS) {
                         response.sendRedirect(request.getContextPath() + "/currentOrder");
+                    } else {
+                        request.setAttribute("errorMessage", "Något gick fel när du skulle beställa ordern.");
+                        loadCheckoutData(request, customer);
+                        request.getRequestDispatcher("/WEB-INF/views/checkout.jsp").forward(request, response);
                     }
-
-                    request.setAttribute("errorMessage", "Något gick fel när du skulle beställa ordern.");
-                    loadCheckoutData(request, customer);
-                    request.getRequestDispatcher("/WEB-INF/views/checkout.jsp").forward(request, response);
+                    break;
                 }
 
                 case "addPaymentMethod" -> {

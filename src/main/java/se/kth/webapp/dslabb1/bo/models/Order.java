@@ -28,7 +28,6 @@ public class Order implements Serializable {
      */
     public Order(UUID orderId, UUID customerId, List<Item> items, LocalDateTime dateOfPurchase, OrderStatus orderStatus) {
         if (customerId == null) throw new IllegalArgumentException("customerId required");
-        if (items == null || items.isEmpty()) throw new IllegalArgumentException("items required");
         if (items.stream().anyMatch(Objects::isNull)) throw new IllegalArgumentException("null item");
         this.orderId = orderId;
         this.customerId = customerId;

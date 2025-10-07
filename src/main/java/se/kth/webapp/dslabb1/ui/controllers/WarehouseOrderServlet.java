@@ -7,13 +7,13 @@ import jakarta.servlet.http.HttpServlet;
 import jakarta.servlet.http.HttpServletRequest;
 import jakarta.servlet.http.HttpServletResponse;
 import jakarta.servlet.http.HttpSession;
-import se.kth.webapp.dslabb1.bo.models.Order;
-import se.kth.webapp.dslabb1.bo.models.Worker;
 import se.kth.webapp.dslabb1.bo.models.enums.OrderStatus;
 import se.kth.webapp.dslabb1.bo.models.enums.Result;
 import se.kth.webapp.dslabb1.bo.services.OrderService;
 import se.kth.webapp.dslabb1.db.data.OrderDAO;
 import se.kth.webapp.dslabb1.db.data.UserDAO;
+import se.kth.webapp.dslabb1.ui.info.OrderInfo;
+import se.kth.webapp.dslabb1.ui.info.UserInfo;
 
 import java.io.IOException;
 import java.util.List;
@@ -33,7 +33,7 @@ public class WarehouseOrderServlet extends HttpServlet {
             return;
         }
 
-        Worker worker = (Worker) session.getAttribute("WAREHOUSEWORKER");
+        UserInfo worker = (UserInfo) session.getAttribute("WAREHOUSEWORKER");
         String orderIdParam = request.getParameter("orderId");
         String filterStatus = request.getParameter("status");
 
@@ -45,7 +45,7 @@ public class WarehouseOrderServlet extends HttpServlet {
     }
 
     private void showOrderList(HttpServletRequest request, HttpServletResponse response,
-                               Worker worker, String filterStatus) throws ServletException, IOException {
+                               UserInfo worker, String filterStatus) throws ServletException, IOException {
 
         List<OrderDAO> allOrders = OrderDAO.findAll();
 
@@ -56,7 +56,7 @@ public class WarehouseOrderServlet extends HttpServlet {
                 filteredOrders = allOrders.stream()
                         .filter(o -> o.orderStatus() == status)
                         .collect(Collectors.toList());
-            } catch (IllegalArgumentException e) {
+            } catch (IllegalArgumentException _) {
 
             }
         }
@@ -71,12 +71,12 @@ public class WarehouseOrderServlet extends HttpServlet {
     }
 
     private void showOrderDetails(HttpServletRequest request, HttpServletResponse response,
-                                  Worker worker, String orderIdParam)
+                                  UserInfo worker, String orderIdParam)
             throws ServletException, IOException {
 
         try {
             UUID orderId = UUID.fromString(orderIdParam);
-            Order order = OrderService.getOrderById(orderId, worker.getId(), worker.getUserType());
+            OrderInfo order = OrderService.getOrderById(orderId, worker.userId(), worker.userType());
 
             if (order == null) {
                 request.setAttribute("errorMessage", "Beställning hittades inte.");
@@ -84,13 +84,13 @@ public class WarehouseOrderServlet extends HttpServlet {
                 return;
             }
 
-            UserDAO customer = UserDAO.findById(order.getCustomerId());
+            UserDAO customer = UserDAO.findById(order.customerId());
             request.setAttribute("worker", worker);
             request.setAttribute("order", order);
-            request.setAttribute("orderItems", order.getItems());
+            request.setAttribute("orderItems", order.items());
             request.setAttribute("canAdvance",
-                    order.getOrderStatus() == OrderStatus.PAID ||
-                            order.getOrderStatus() == OrderStatus.SHIPPED);
+                    order.orderStatus() == OrderStatus.PAID ||
+                            order.orderStatus() == OrderStatus.SHIPPED);
 
 
             if (customer != null) {
@@ -118,7 +118,7 @@ public class WarehouseOrderServlet extends HttpServlet {
             return;
         }
 
-        Worker worker = (Worker) session.getAttribute("WAREHOUSEWORKER");
+        UserInfo worker = (UserInfo) session.getAttribute("WAREHOUSEWORKER");
         String action = request.getParameter("action");
         String orderIdParam = request.getParameter("orderId");
 
@@ -129,7 +129,7 @@ public class WarehouseOrderServlet extends HttpServlet {
         response.sendRedirect(request.getContextPath() + "/warehouse/orders?orderId=" + orderIdParam);
     }
 
-    private void advanceOrderStatus(HttpServletRequest request, Worker worker, String orderIdParam) {
+    private void advanceOrderStatus(HttpServletRequest request, UserInfo worker, String orderIdParam) {
         try {
             UUID orderId = UUID.fromString(orderIdParam);
             OrderDAO currentOrder = OrderDAO.findById(orderId);
@@ -143,7 +143,7 @@ public class WarehouseOrderServlet extends HttpServlet {
             }
 
             if (nextStatus != null) {
-                Result result = OrderService.updateOrderStatus(orderId, nextStatus, worker.getUserType());
+                Result result = OrderService.updateOrderStatus(orderId, nextStatus, worker.userType());
 
                 if (result == Result.SUCCESS) {
                     request.getSession().setAttribute("successMessage",

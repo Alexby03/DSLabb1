@@ -38,11 +38,11 @@
 
 <div class="order-header">
     <div class="order-info">
-        <h2>Beställning #${order.orderId.toString().substring(0, 8)}</h2>
-        <p>Datum: ${order.dateOfPurchase.toString().substring(0, 10)}</p>
+        <h2>Beställning #${order.orderId().toString().substring(0, 8)}</h2>
+        <p>Datum: ${order.dateOfPurchase().toString().substring(0, 10)}</p>
     </div>
-    <div class="order-status status-${order.orderStatus}">
-        ${order.orderStatus}
+    <div class="order-status status-${order.orderStatus()}">
+        ${order.orderStatus()}
     </div>
 </div>
 
@@ -65,11 +65,11 @@
     <c:if test="${not empty orderItems}">
     <c:forEach var="item" items="${orderItems}">
         <tr>
-            <td>${item.sku}</td>
-            <td>${item.productName}</td>
-            <td>${item.unitPrice} kr</td>
-            <td>${item.quantity}</td>
-            <td>${item.unitPrice * item.quantity} kr</td>
+            <td>${item.sku()}</td>
+            <td>${item.productName()}</td>
+            <td>${item.unitPrice()} kr</td>
+            <td>${item.quantity()}</td>
+            <td>${item.unitPrice() * item.quantity()} kr</td>
         </tr>
     </c:forEach>
     </c:if>
@@ -86,7 +86,7 @@
             <form method="post" action="${pageContext.request.contextPath}/orders"
                   onsubmit="return confirm('Är du säker på att du vill avbeställa denna order?');">
                 <input type="hidden" name="action" value="cancelOrder"/>
-                <input type="hidden" name="orderId" value="${order.orderId}"/>
+                <input type="hidden" name="orderId" value="${order.orderId()}"/>
                 <button type="submit" class="btn-danger">Avbeställ order</button>
             </form>
         </c:when>

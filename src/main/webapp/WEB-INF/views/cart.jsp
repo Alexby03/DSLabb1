@@ -54,35 +54,35 @@
 <c:if test="${not isEmpty}">
     <c:forEach var="item" items="${cartItems}">
         <div class="card">
-            <h3>${item.productName}</h3>
-            <p>SKU: ${item.sku}</p>
-            <p class="price">${item.price} kr/st</p>
+            <h3>${item.productName()}</h3>
+            <p>SKU: ${item.sku()}</p>
+            <p class="price">${item.price()} kr/st</p>
 
             <div class="quantity-controls">
                 <form method="post" action="${pageContext.request.contextPath}/cart" style="display: inline;">
                     <input type="hidden" name="action" value="updateQuantity"/>
-                    <input type="hidden" name="sku" value="${item.sku}"/>
-                    <input type="hidden" name="quantity" value="${item.quantity - 1}"/>
-                    <button type="submit" class="qty-btn btn-primary" ${item.quantity <= 1 ? 'disabled' : ''}>-</button>
+                    <input type="hidden" name="sku" value="${item.sku()}"/>
+                    <input type="hidden" name="quantity" value="${item.quantity() - 1}"/>
+                    <button type="submit" class="qty-btn btn-primary" ${item.quantity() <= 1 ? 'disabled' : ''}>-</button>
                 </form>
 
-                <span><strong>${item.quantity} st</strong></span>
+                <span><strong>${item.quantity()} st</strong></span>
 
                 <form method="post" action="${pageContext.request.contextPath}/cart" style="display: inline;">
                     <input type="hidden" name="action" value="updateQuantity"/>
-                    <input type="hidden" name="sku" value="${item.sku}"/>
-                    <input type="hidden" name="quantity" value="${item.quantity + 1}"/>
+                    <input type="hidden" name="sku" value="${item.sku()}"/>
+                    <input type="hidden" name="quantity" value="${item.quantity() + 1}"/>
                     <button type="submit" class="qty-btn btn-primary">+</button>
                 </form>
             </div>
 
-            <p><strong>Summa: ${item.subtotal()} kr</strong></p>
+            <p><strong>Summa: ${item.getSubtotal()} kr</strong></p>
 
             <form method="post" action="${pageContext.request.contextPath}/cart" style="display: inline;">
                 <input type="hidden" name="action" value="removeItem"/>
-                <input type="hidden" name="sku" value="${item.sku}"/>
+                <input type="hidden" name="sku" value="${item.sku()}"/>
                 <button type="submit" class="btn-danger"
-                        onclick="return confirm('Ta bort ${item.productName}?')">
+                        onclick="return confirm('Ta bort ${item.productName()}?')">
                     Ta bort
                 </button>
             </form>
