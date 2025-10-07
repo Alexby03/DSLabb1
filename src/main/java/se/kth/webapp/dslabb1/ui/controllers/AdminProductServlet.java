@@ -102,7 +102,7 @@ public class AdminProductServlet extends HttpServlet {
             ProductInfo product = ProductService.findProductBySKU(sku);
 
             if (product != null) {
-                Result result = ProductService.increaseQuantity(sku, quantity, admin.userType());  //TODO: check if works with sku
+                Result result = ProductService.increaseQuantity(sku, quantity, admin.userType());
                 if (result == Result.SUCCESS) {
                     request.setAttribute("successMessage", "Lager uppdaterat.");
                 } else {
